@@ -270,7 +270,7 @@ console.log(operar(2, 3, suma)); // 5
 
 Fijaos en que pasamos `suma`, la función, y no `suma()`, que sería una llamada. `operar` decide cuándo invocarla.
 
-Una expresión de función puede ser anónima y asignarse a una variable o pasarse directamente como argumento:
+Una expresión de función puede ser anónima y asignarse a una variable:
 
 ```javascript
 const multiplicar = function (a, b) {
@@ -282,7 +282,7 @@ console.log(multiplicar(2, 3)); // 6
 
 ### Funciones flecha
 
-La sintaxis de flecha usa `=>`. A la izquierda ponemos los parámetros y a la derecha una expresión cuyo resultado se devuelve automáticamente:
+La sintaxis de flecha usa `=>` en lugar de `function`. Es como una "notación abreviada útil para funciones sencillas", aunque hay alguna diferencia adicional. A la izquierda ponemos los parámetros y a la derecha una expresión cuyo resultado se devuelve automáticamente:
 
 ```javascript
 const suma = (a, b) => a + b;
@@ -322,7 +322,7 @@ const persona = {
         lugar: "central de Springfield"
     },
     "nombre esposa": "Marge",
-    saludar() {
+    saludar: function() {
         console.log(`Hola, soy ${this.nombre}`);
     }
 };
@@ -340,63 +340,6 @@ console.log(persona.propiedad);  // undefined: busca literalmente "propiedad"
 Los nombres que no son identificadores válidos, como `"nombre esposa"`, se escriben entre comillas y se consultan con corchetes. Los corchetes también permiten calcular el nombre de la propiedad.
 
 En la llamada `persona.saludar()`, `this` es `persona`. No sustituyáis este método por una flecha esperando el mismo comportamiento: una flecha no recibe ese `this` del objeto que la llama.
-
-### `const` no hace inmutable un objeto
-
-Podemos añadir, modificar y eliminar propiedades de nuestros objetos:
-
-```javascript
-const persona = { nombre: "Pepe", edad: 20 };
-persona.nombre = "Juan"; // Correcto: modificamos el objeto
-persona.ciudad = "Alicante";
-delete persona.edad;
-
-console.log(persona.nombre); // "Juan"
-console.log(persona.edad);   // undefined
-// persona = {}; // TypeError: esto sí reasignaría la variable
-```
-
-**`const` impide reasignar la variable, no modificar el objeto al que apunta.** Lo mismo ocurre con los arrays.
-
-`delete` elimina la propiedad. Al consultar una propiedad que no existe ni en el objeto ni en sus prototipos obtenemos `undefined`. Dejamos los prototipos para la ampliación.
-
-### Primitivos y referencias a objetos
-
-**JavaScript pasa los argumentos por valor.** Las asignaciones también copian valores. PERO **con un objeto, el valor que copiamos es una referencia**: no se duplica el objeto.
-
-```javascript
-let numero = 1;
-let otroNumero = numero;
-otroNumero = 2;
-console.log(numero); // 1
-
-const a = { x: 1 };
-const b = a; // Los dos apuntan al mismo objeto
-b.x = 2;
-console.log(a.x); // 2
-console.log(a === b); // true: es el mismo objeto
-console.log({ x: 2 } === { x: 2 }); // false: son objetos distintos
-```
-
-Al pasar un objeto a una función, esta puede modificarlo a través de la referencia copiada. Pero reasignar el parámetro no cambia la variable del llamador:
-
-```javascript
-function modificar(objeto) {
-    objeto.x = 2;
-}
-
-function sustituir(objeto) {
-    objeto = { x: 100 }; // Solo cambiamos el parámetro local
-}
-
-const dato = { x: 1 };
-modificar(dato);
-console.log(dato.x); // 2
-sustituir(dato);
-console.log(dato.x); // Sigue siendo 2
-```
-
-Esta es la diferencia entre **modificar el objeto compartido** y **reasignar una variable**. Con los arrays ocurre lo mismo. Véase la [explicación de parámetros en MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions).
 
 ### JSON: texto para intercambiar datos
 
@@ -433,6 +376,65 @@ console.log(recuperada.nombre); // "Homer"
 ```
 
 JSON no define tipos específicos para fechas o expresiones regulares. Tampoco es una herramienta general para clonar objetos: por ejemplo, `stringify` omite propiedades con valor `undefined` y métodos; las fechas se serializan normalmente como cadenas. Más detalles en la [referencia de JSON](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON).
+
+
+### `const` no hace inmutable un objeto
+
+Podemos añadir, modificar y eliminar propiedades de nuestros objetos:
+
+```javascript
+const persona = { nombre: "Pepe", edad: 20 };
+persona.nombre = "Juan"; // Correcto: modificamos el objeto
+persona.ciudad = "Alicante";
+delete persona.edad;
+
+console.log(persona.nombre); // "Juan"
+console.log(persona.edad);   // undefined
+// persona = {}; // TypeError: esto sí reasignaría la variable
+```
+
+**`const` impide reasignar la variable, no modificar el objeto al que apunta.** Lo mismo ocurre con los arrays.
+
+`delete` elimina la propiedad. Al consultar una propiedad que no existe obtenemos `undefined`. 
+
+### Primitivos y referencias a objetos
+
+**JavaScript pasa los argumentos por valor.** Las asignaciones también copian valores. **PERO con un objeto, el valor que copiamos es una referencia, una dirección de memoria**: no se duplica el objeto.
+
+```javascript
+let numero = 1;
+let otroNumero = numero;
+otroNumero = 2;
+console.log(numero); // 1
+
+const a = { x: 1 };
+const b = a; // Los dos apuntan al mismo objeto
+b.x = 2;
+console.log(a.x); // 2
+console.log(a === b); // true: es el mismo objeto
+console.log({ x: 2 } === { x: 2 }); // false: son objetos distintos porque son referencias distintas
+```
+
+Al pasar un objeto a una función, esta puede modificarlo a través de la referencia copiada. Pero reasignar el parámetro no cambia la variable del llamador:
+
+```javascript
+function modificar(objeto) {
+    objeto.x = 2;
+}
+
+function sustituir(objeto) {
+    objeto = { x: 100 }; // Solo cambiamos el parámetro local
+}
+
+const dato = { x: 1 };
+modificar(dato);
+console.log(dato.x); // 2
+sustituir(dato);
+console.log(dato.x); // Sigue siendo 2
+```
+
+Esta es la diferencia entre **modificar el objeto compartido** y **reasignar una variable**. Con los arrays ocurre lo mismo. Véase la [explicación de parámetros en MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions).
+
 
 ## Arrays
 
@@ -562,23 +564,36 @@ Esto no significa que el motor mueva literalmente las líneas del archivo. Tampo
 
 ### Prototipos
 
-JavaScript utiliza herencia basada en prototipos. Cuando una propiedad no está en el propio objeto, se busca en su prototipo, después en el prototipo de este, y así hasta llegar a `null`. Muchas cadenas pasan por `Object.prototype`, pero no es obligatorio.
+ Javascript es prácticamente el único lenguaje *mainstream* orientado a objetos que **originalmente no incluía la idea de clase ni de herencia basada en clases**, sino basada en **prototipos**.
+ 
+ Cuando creamos un objeto podemos especificar cuál queremos que sea su *prototipo*. Si el objeto no tiene una propiedad, se buscará en el prototipo. Si la propiedad sigue sin encontrarse en el prototipo, se irá al prototipo del prototipo, y así sucesivamente hasta llegar a `Object.prototype`.
+ 
+ Podemos ver esto como **una forma de herencia en la que un objeto concreto hereda de otro**, en lugar de una clase de otra.
+
 
 ```javascript
-const original = { nombre: "original" };
-const descendiente = Object.create(original);
+var original = {
+  nombre: "original",
+  saludar: function() {
+    return "hola, qué tal";
+  }
+}
 
-console.log(descendiente.nombre); // "original": lo encuentra en el prototipo
-descendiente.nombre = "descendiente"; // Crea una propiedad propia
-console.log(descendiente.nombre); // "descendiente"
-console.log(original.nombre);     // "original"
+//El prototipo de "descendiente" es "original"
+var descendiente = Object.create(original);
+console.log(descendiente.nombre) //"original"
+console.log(descendiente.hasOwnProperty("nombre")) //nos dice que la propiedad no está directamente en descendiente
+console.log(descendiente.saludar()) //"hola, qué tal"
+original.nombre = "original_2"
+console.log(descendiente.nombre) //el mismo, el valor se comparte!!
+descendiente.nombre = "descendiente"  //propiedad nueva en descendiente
+console.log(descendiente.hasOwnProperty("nombre")) //Ahora será true
 ```
 
-Podemos verlo como un objeto que delega la búsqueda de propiedades en otro. `Object.create()` no clona el objeto recibido.
 
 ### Clases
 
-Desde ES2015 tenemos sintaxis `class`, apoyada en el modelo de prototipos. Nos permite expresar constructores y métodos de una forma más familiar si venimos de Java o C++.
+La herencia orientada a prototipos es ajena a la experiencia del 99% de los desarrolladores, acostumbrados a la herencia basada en clases de lenguajes como Java o C++. Finalmente en ES2015 se añadieron clases al lenguaje, con una sintaxis similar a la de otros lenguajes más clásicos. Nos permite expresar constructores y métodos de una forma más familiar si venimos de Java o C++. No obstante internamente el lenguaje sigue usando prototipos para modelar objetos y herencia. Es decir, las clases son "azúcar sintáctico".
 
 ```javascript
 class Persona {
@@ -595,7 +610,29 @@ const persona = new Persona("Pepe");
 persona.saludar(); // "Hola, soy Pepe"
 ```
 
-Los métodos no se separan con comas. También existen getters y setters (`get`/`set`) y herencia con `extends`; `super` permite llamar al constructor y a métodos de la clase base. Lo desarrollaremos cuando haga falta.
+Los métodos no se separan con comas. También existen getters y setters (`get`/`set`).
+
+Para crear una clase que herede de otra la definimos con `extends`
+
+```javascript
+class StarWarsFan extends Persona {
+    constructor(nombre) {
+        super("Darth " + nombre)
+    }
+
+    saludar() {
+        super.saludar()
+        console.log("Yo soy tu padre")  
+    }
+}
+
+let juan = new StarWarsFan("Juan")
+juan.saludar()  //Hola, soy Darth Juan\n Yo soy tu padre
+```
+
+Como vemos, con `super` podemos invocar el constructor o los métodos de la clase base. 
+
+Si no definimos constructor en la clase heredada, el intérprete Javascript define automáticamente uno que llama al de la clase base.
 
 JavaScript no emplea los modificadores `public`/`private` de Java, pero sí permite declarar **campos y métodos privados con `#`**:
 
