@@ -177,3 +177,85 @@ th {
 img {
   max-width: 100%;
 }
+
+
+/* -------------------------------------------------------
+   Syntax highlighting — Rouge
+   ------------------------------------------------------- */
+
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cs {
+  color: #6e7781;
+  font-style: italic;
+}
+
+.highlight .k,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt {
+  color: #cf222e;
+}
+
+.highlight .s,
+.highlight .s1,
+.highlight .s2,
+.highlight .sb,
+.highlight .sc,
+.highlight .sd,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx {
+  color: #0a3069;
+}
+
+.highlight .na,
+.highlight .nb,
+.highlight .nc,
+.highlight .no,
+.highlight .nd,
+.highlight .ne,
+.highlight .nf,
+.highlight .ni,
+.highlight .nl,
+.highlight .nn,
+.highlight .nt,
+.highlight .nv {
+  color: #8250df;
+}
+
+.highlight .m,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+  color: #0550ae;
+}
+
+.highlight .o,
+.highlight .ow {
+  color: #cf222e;
+}
+
+.highlight .p {
+  color: #24292f;
+}
+
+.highlight .err {
+  color: #82071e;
+}
+
+.highlight .gd {
+  color: #82071e;
+  background: #ffebe9;
+}
+
+.highlight .gi {
+  color: #116329;
+  background: #dafbe1;
+}
