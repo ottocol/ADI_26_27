@@ -468,6 +468,24 @@ Código JavaScript
        └── políticas RLS
 ```
 
-El SDK JavaScript construye peticiones a un API HTTP de tipo REST proporcionado por Supabase. Podríamos haher usado directamente la API REST en lugar del SDK Javascript pero los ejemplos serían más tediosos de escribir.
+El SDK JavaScript construye peticiones a un API HTTP de tipo REST proporcionado por Supabase. Podríamos haher usado directamente la API REST en lugar del SDK Javascript pero los ejemplos serían más tediosos de escribir. Por ejemplo:
 
-En las próximas sesiones estudiaremos con más detalle los **APIs web**, de modo que podamos entender mejor qué está haciendo por nosotros el SDK.
+
+```javascript
+const SUPABASE_URL = "LA-URL-DEL-PROYECTO"
+const SUPABASE_KEY = "LA-PUBLISHABLE-KEY"
+
+const response = await fetch(
+  `${SUPABASE_URL}/rest/v1/lista`,
+  {
+    headers: {
+      apikey: SUPABASE_KEY
+    }
+  }
+)
+
+const datos = await response.json()
+console.log(datos)
+```
+
+En las próximas sesiones estudiaremos con más detalle las **APIs web**, de modo que podamos entender mejor qué está haciendo por nosotros el SDK.
