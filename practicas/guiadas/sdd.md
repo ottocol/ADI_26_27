@@ -147,7 +147,7 @@ Debe incluir cosas como:
 - framework/plataforma utilizado en backend y frontend;
 - estructura de carpetas;
 - colecciones/tablas del backend;
-- servicios de acceso al backend;
+- capa de servicios del backend o rutas si es un API REST;
 - stores o gestión de estado en frontend;
 - convenciones de nombres;
 - decisiones importantes de diseño.
@@ -158,7 +158,7 @@ Este documento no tiene que ser excesivamente largo, ni tiene por qué tener tod
 **El documento va a evolucionar durante el proyecto** conforme vayamos avanzando en la asignatura, ya que por ejemplo al principio no vemos todavía *frontend*. También puede cambiar si comprobamos que decisiones pasadas sobre la arquitectura estaban equivocadas.
 
 ```
-# ARCHITECTURE.md
+# ARCHITECTURE
 
 ## Backend
 
@@ -365,7 +365,7 @@ La IA propuso añadir filtros por género en esta iteración, pero se ha descart
 
 ### 7.3 Sección `TEST_PLAN`
 
-La sección `TEST_PLAN` explica cómo se comprobará que la funcionalidad funciona correctamente.
+La sección `TEST_PLAN` explica cómo se comprobará que la funcionalidad funciona correctamente. **Puede ser propuesta por la IA, pero debe ser revisada por el estudiante**
 
 Puede incluir pruebas manuales, pruebas automáticas o ambas.
 
@@ -490,18 +490,23 @@ Es decir:
 
 Si una prueba o la revisión detectan un problema, se corregirá y se repetirán las comprobaciones afectadas. Una iteración se considera terminada cuando cumple su SPEC, se han ejecutado y registrado las validaciones previstas, se han revisado los cambios y la documentación está actualizada. Si queda algo pendiente, debe indicarse expresamente y justificarse su aplazamiento o el cambio de alcance.
 
-## 9. Consejos sobre cómo usar la IA correctamente
+Si en una iteración se detecta un *bug* que se ha introducido en iteraciones previas pero no se había detectado hasta ahora, lo podéis corregir en la iteración actual, haciendo un *commit* con la corrección o bien si no interactúa con la iteración actual y puede esperar, podéis hacer una iteración separada para corregirlo.
 
-### Pedir primero un plan
+## 9. Consejos básicos sobre cómo usar la IA correctamente
+
+### Recordarle siempre a la IA el contexto
 
 Antes de pedir código, se recomienda usar un prompt como:
 
 ```
-Lee la sección SPEC de esta iteración.
+Vamos con la iteración 05. Revisa PROJECT_SPEC.md y ARCHITECTURE.md
+en su versión actual y lee la sección SPEC de esta iteración.
 Propón un plan de implementación.
 No modifiques código todavía.
 Indica qué archivos habría que crear o modificar.
 ```
+
+> Es probable que el modelo de IA ya "recuerde" de la conversación hasta ahora que los datos generales del proyecto están en `PROJECT_SPEC.md` y `ARCHITECTURE.md`, pero en conversaciones largas es recomendable especificarlo.
 
 ### Limitar el alcance
 
