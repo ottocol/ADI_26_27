@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ejemplo de llamadas a la API de Supabase</title>
+</head>
+<body>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm';
+    export const SUPABASE_URL = 'https://tynmtgjjapyxukbxxpoc.supabase.co';
+    export const SUPABASE_KEY = 'sb_publishable_J6r6CiO19PjO5sAHXMd6mA_AS1ZF9pj';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    let { data, error } = await supabase.auth.signInWithPassword({ email:"pepe@ua.es", password:"pepepepe" });
+    console.log(data)
+    let { data: lista, error: error_query} = await supabase
+                                                      .from('lista')
+                                                      .select()
+    for (let dato of lista) {
+      console.log(dato)
+    }
+  </script>
+</body>
+</html>
