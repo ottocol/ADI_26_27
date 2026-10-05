@@ -39,7 +39,7 @@ Pero el desarrollo *frontend* actual no es trivial
 ## Insertar JS en el HTML
 
 - En etiquetas `<script>`
-- El ámbito de las variables y funciones definidas es la *página*
+- El ámbito de las variables y funciones definidas en el "primer nivel" es la *página*
 - Por defecto el JS se *parsea* y ejecuta conforme se va leyendo
 
 ```html
@@ -103,44 +103,18 @@ Con *scripts* externos podemos usar los atributos `defer` o `async`
 
 ---
 
-## Módulos en JS
-
-Claramente, los `<script src="">` no son una buena solución al **problema de la modularidad**, ya que lo único que estamos haciendo es juntar todo el código en un "espacio global".
-
-En JS han ido surgiendo distintos sistemas de módulos, algunos estándares oficiales y otros "de facto", en la actualidad quedan
-
-- **CommonJS** (originario de Node)
-- **Módulos ES6 o ESM** (diseñados para los navegadores, también en Node desde 2020)  
-
----
-
-## Módulos CommonJS
-
-```javascript
-//Archivo "modulo_saludo.js"
-function saludar(nombre) {
-    return "Hola qué tal, " +  nombre
-}
-  
-module.exports =  saludar
-```
-
-```javascript
-//Archivo que hace uso de "modulo_saludo"
-let s = require('./modulo_saludo')
-console.log(s("Pepe"))
-```
-
----
-
 ## Módulos ESM
 
 
 ```javascript
 //archivo modulo_saludo.js
+
+const saludos = ["Hola", "Qué tal", "EEEHH"]  //no visible desde fuera 
+
 function saludar(nombre) {
-  return "Hola qué tal, " +  nombre
+  return `${saludos[Math.floor(Math.random()*saludos.length)]}, ${nombre}`
 }
+
 export {saludar}
 ```
 
@@ -152,7 +126,6 @@ console.log(saludar('Pepe'))
 
 Hay muchas formas de [import](https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Statements/import)<br>
 
-
 ```html
 <!-- en el HTML -->
 <script type="module" src="main.js"></script>
@@ -161,19 +134,19 @@ Hay muchas formas de [import](https://developer.mozilla.org/es/docs/Web/JavaScri
 
 ---
 
-## Un problema de los módulos ESM
+## Bundlers y soporte de ESM en el navegador
 
-- Aunque a fecha de hoy todos los navegadores [los implementan](https://caniuse.com/#search=modules), esto es relativamente reciente (desde 2018). **La necesidad de usar módulos en *frontend* surgió antes de que ESM se implementara en los navegadores más usados**
-- A alguien se le ocurrió que se podía añadir soporte de CommonJS al navegador con una herramienta externa que "transformara" el módulo en algo que se pueda incluir con un `script src=""` (esta herramienta se llamó *bundler*)
-- Como resultado, desde hace unos años **muchas dependencias de terceros se distribuyen** con `npm`, **en** formato **CommonJS** (no soportado nativamente por los navegadores)
+- La necesidad de usar módulos en *frontend* surgió antes de que ESM se implementara en los navegadores más usados
+- *Bundler*: una herramienta que puede transformar los módulos en un único archivo cargado con `<script src="">`
+
+![](images_intro/bundler.png)
 
 
 ---
 
 ## Bundlers
 
-- Herramientas que a partir de un conjunto de módulos resuelven las dependencias y **concatenan todo el código en un único .js (*bundle*)** que el navegador puede cargar con un simple `<script src="">`
-- Típicamente ofrecen compatibilidad con módulos ESM y CommonJS
+- Típicamente ofrecen compatibilidad con módulos ESM y CommonJS (sistema de módulos de Node - `require` vs `import`)
 - Además el *bundler* puede realizar operaciones adicionales como:
   * Llamar a un transpilador para traducir el código de ES6 a ES5
   * *minificar* el código
@@ -181,26 +154,6 @@ Hay muchas formas de [import](https://developer.mozilla.org/es/docs/Web/JavaScri
   * ...
 - Ejemplos: webpack, vite, parcel, rollup, esbuild ...
 - Veremos su uso en prácticas
-
-
----
-
-![](images_intro/bundler.png)
-
-
-
----
-
-## ¿Siguen siendo necesarios los *bundlers* en la actualidad?
-
-- Teóricamente no deberían, ya que todos los navegadores soportan ESM
-- Pero...
-    + En producción es más eficiente descargar un solo *bundle* que muchos módulos separados (demasiadas peticiones HTTP)
-    + Además del *bundle* realizan otras muchas tareas
-- Hay *bundlers* modernos, como [Vite](https://vitejs.dev/), que generan *bundles* compatibles con ESM
-
-
-
 
 ---
 
@@ -219,7 +172,7 @@ Hay muchas formas de [import](https://developer.mozilla.org/es/docs/Web/JavaScri
 <!-- .slide: class="titulo" -->
 
 
-## Acceso al HTML y manipulación del contenido: el API DOM
+## Acceso al HTML y manipulación del contenido: la API del DOM
 
 ---
 
