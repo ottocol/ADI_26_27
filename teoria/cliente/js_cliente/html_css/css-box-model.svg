@@ -1,0 +1,177 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+    "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg
+    width="960"
+    height="720"
+    viewBox="0 0 1160 870"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+>
+    <rect
+        x="1"
+        y="1"
+        width="1158"
+        height="868"
+        fill="#FF847A"
+        stroke="black"
+        stroke-width="2"
+    />
+    <rect
+        x="81"
+        y="81"
+        width="998"
+        height="708"
+        fill="#FFC63A"
+        stroke="black"
+        stroke-width="2"
+    />
+    <rect
+        x="161"
+        y="161"
+        width="838"
+        height="548"
+        fill="#1AC482"
+        stroke="black"
+        stroke-width="2"
+    />
+    <rect
+        x="241"
+        y="241"
+        width="678"
+        height="388"
+        fill="#7BB8FF"
+        stroke="black"
+        stroke-width="2"
+    />
+
+    <path
+        d="M901 549L891 543.226V554.774L901 549ZM243 549L253 554.774V543.226L243 549ZM892 548L252 548V550L892 550V548Z"
+        fill="black"
+    />
+    <path
+        d="M390 627L395.774 617L384.226 617L390 627ZM390 242L384.227 252L395.774 252L390 242ZM391 618L391 251L389 251L389 618L391 618Z"
+        fill="black"
+    />
+
+    <text
+        x="50%"
+        y="50"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >margin-top</text>
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(1110,435) rotate(90)"
+    >margin-right</text>
+    <text
+        x="50%"
+        y="840"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >margin-bottom</text>
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(50,435) rotate(-90)"
+    >margin-left</text>
+
+    <text
+        x="50%"
+        y="130"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >border-top</text>
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(1030,435) rotate(90)"
+    >border-right</text>
+    <text
+        x="50%"
+        y="760"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >border-bottom</text>
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(130,435) rotate(-90)"
+    >border-left</text>
+
+    <text
+        x="50%"
+        y="210"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >padding-top</text>
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(950,435) rotate(90)"
+    >padding-right</text>
+    <text
+        x="50%"
+        y="680"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >padding-bottom</text>
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(210,435) rotate(-90)"
+    >padding-left</text>
+
+    <text
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+        transform="translate(370,435) rotate(-90)"
+    >height</text>
+
+    <text
+        x="50%"
+        y="530"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="32"
+        fill="black"
+    >width</text>
+
+    <text
+        x="50%"
+        y="50%"
+        text-anchor="middle"
+        font-family="monospace"
+        font-size="64"
+        font-weight="bold"
+        fill="black"
+    >content</text>
+
+</svg>
