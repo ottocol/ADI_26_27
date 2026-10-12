@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Bloqueo del hilo principal</title>
+</head>
+<body>
+  <button id="botonAnimar">Animar el título</button>
+  <h1 id="titulo">Javascript mola!</h1>
+  <script>
+    document.getElementById("botonAnimar").addEventListener('click', function(){
+      let inicio = null
+      function frame(t) {                 // t: instante actual en ms
+        inicio ??= t
+        const tam = Math.min(100, 1 + (t - inicio) / 20)   // ~50 px por segundo
+        titulo.style.fontSize = tam + 'px'
+        if (tam < 100) requestAnimationFrame(frame)
+      }
+      requestAnimationFrame(frame)
+    })
+  </script>
+</body>
+</html>

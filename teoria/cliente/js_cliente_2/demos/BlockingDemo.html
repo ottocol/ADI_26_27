@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Bloqueo del hilo principal</title>
+</head>
+<body>
+  <h1>¿Se congela la página?</h1>
+  <p>Tiempo transcurrido: <span id="contador">0.0</span> s</p>
+  <button id="botonBloquear">Bloquear 5 segundos</button>
+
+  <script>
+    const botonBloquear = document.getElementById('botonBloquear')
+    const contador = document.getElementById('contador')
+    const inicio = Date.now()
+
+    setInterval(() => {
+      contador.textContent = ((Date.now() - inicio) / 1000).toFixed(1)
+    }, 100)
+
+    botonBloquear.addEventListener('click', () => {
+      const fin = Date.now() + 5000
+      while (Date.now() < fin) {}
+    })
+  </script>
+</body>
+</html>

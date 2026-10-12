@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Bloqueo del hilo principal</title>
+</head>
+<body>
+  <button id="botonAnimar">Animar el título</button>
+  <h1 id="titulo">Javascript mola!</h1>
+  <script>
+    document.getElementById("botonAnimar").addEventListener('click', function(){
+      const titulo = document.getElementById('titulo')
+      for (let tamaño = 1; tamaño <= 100; tamaño++) {
+          titulo.style.fontSize = `${tamaño}px`
+      }  
+    })
+  </script>
+</body>
+</html>
