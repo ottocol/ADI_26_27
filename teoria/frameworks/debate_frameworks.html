@@ -1,0 +1,284 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>¿Para qué un framework?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: hoja de clase para proyectar — cabecera, tres citas en fila, preguntas */
+:root {
+  --bg: #f6f8f6;
+  --surface: #ffffff;
+  --ink: #18221c;
+  --muted: #56645b;
+  --line: #d6dfd9;
+  --accent: #1f9d55;
+  --accent-soft: #e3f4ea;
+  --figure: #eef3ef;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111814; --surface: #18221c; --ink: #e6efe9; --muted: #9fb0a5;
+    --line: #2a3830; --accent: #4fd18a; --accent-soft: #1b3326;
+    --figure: #142019; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111814; --surface: #18221c; --ink: #e6efe9; --muted: #9fb0a5;
+  --line: #2a3830; --accent: #4fd18a; --accent-soft: #1b3326;
+  --figure: #142019; color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+.page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding-block: 2.5rem 3rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 2.75rem;
+}
+
+/* Cabecera */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 0.4rem 1rem;
+}
+.eyebrow .tag {
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+}
+h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0.75rem 0 0;
+  text-wrap: balance;
+}
+h1 em { font-style: normal; color: var(--accent); }
+.lede { max-width: 60ch; color: var(--muted); margin: 1rem 0 0; font-size: 1.125rem; }
+
+h2 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.5rem;
+  margin: 0 0 1.1rem;
+}
+
+/* Provocaciones */
+.prompts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+.prompt {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.prompt .quote {
+  margin: 0;
+  padding: 1.3rem 1.3rem 1.2rem;
+  background: var(--figure);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 0.9rem;
+}
+.prompt .quote p {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.prompt .quote p::before { content: "“"; color: var(--accent); margin-right: 0.08em; }
+.prompt .quote p::after { content: "”"; color: var(--accent); margin-left: 0.04em; }
+.prompt .quote .lead-in {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+.prompt .text {
+  padding: 1.1rem 1.3rem 1.1rem;
+  display: flex; flex-direction: column; gap: 0.55rem;
+  flex: 1;
+}
+.prompt .who {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+.prompt .when {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.prompt .context { margin: 0; font-size: 0.98rem; color: var(--muted); }
+.prompt a {
+  margin-top: auto;
+  padding-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* Preguntas */
+.questions {
+  list-style: none;
+  margin: 0; padding: 0;
+  counter-reset: q;
+  display: grid;
+  gap: 0.25rem;
+  max-width: 52rem;
+}
+.questions li {
+  counter-increment: q;
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.2rem;
+  line-height: 1.4;
+}
+.questions li:last-child { border-bottom: 0; }
+.questions li::before {
+  content: counter(q);
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  width: 2rem; height: 2rem;
+  display: grid; place-items: center;
+  margin-top: 0.05rem;
+}
+.questions .key {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+.variant {
+  max-width: 52rem;
+  margin: 1.25rem 0 0;
+  padding: 0.9rem 1.1rem;
+  background: var(--accent-soft);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.variant strong { color: var(--accent); }
+
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Pie */
+.rules {
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem 2rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.rules strong { color: var(--ink); font-weight: 600; display: block; }
+</style>
+
+<main class="page">
+  <header>
+    <div class="eyebrow">
+      <span>ADI · Tema 6 · Frameworks JS en el cliente</span>
+      <span class="tag">Actividad individual</span>
+    </div>
+    <h1>¿Para qué un framework si el código lo <em>escribe una IA</em>?</h1>
+    <p class="lede">En clase hemos dicho que los frameworks nos ahorran trabajo y nos dan estructura. Pero si el código ya no lo escribimos nosotros, ¿siguen haciendo falta? No hay respuesta correcta: quiero saber qué piensas tú.</p>
+  </header>
+
+  <section aria-labelledby="h-prompts">
+    <h2 id="h-prompts">Tres puntos de partida</h2>
+    <div class="prompts">
+
+      <article class="prompt">
+        <blockquote class="quote" lang="en">
+          <p>Rust es INCREÍBLE… ¡si nunca, nunca, nunca tienes que mirarlo tú mismo! A los agentes les gusta Rust, ¡genial! Yo te digo lo que hay que hacer y tú lo escribes en Rust. <b>Yo nunca tengo que mirarlo.</b></p>
+        </blockquote>
+        <div class="text">
+          <span class="who">David Heinemeier Hansson</span>
+          <span class="when">Creador de Ruby on Rails · Rails World, sept. 2026</span>
+          <p class="context">En su empresa los agentes han reescrito el backend de su aplicación de correo en Rust, un lenguaje que él no quiere ni leer. Ya no escriben código a mano: describen lo que quieren y juzgan el resultado.</p>
+          <a href="https://www.globalnerdy.com/2026/09/27/dhhs-keynote-at-rails-world-2026-the-most-confusing-funeral-ive-ever-experienced/" target="_blank" rel="noopener">Crónica de la keynote</a>
+        </div>
+      </article>
+
+      <article class="prompt">
+        <blockquote class="quote" lang="en">
+          <p>Si no está en los datos de entrenamiento del LLM, no existe.</p>
+        </blockquote>
+        <div class="text">
+          <span class="who">Paul Kinlan</span>
+          <span class="when">Equipo de Chrome · «Dead framework theory», oct. 2025</span>
+          <p class="context">React ya no compite con otros frameworks: ha ganado. Los LLM generan React porque es lo que más han visto, eso produce más React, y un framework nuevo tarda más de un año en que la IA aprenda a usarlo.</p>
+          <a href="https://aifoc.us/dead-framework-theory/" target="_blank" rel="noopener">aifoc.us/dead-framework-theory</a>
+        </div>
+      </article>
+
+      <article class="prompt">
+        <blockquote class="quote" lang="en">
+          <p>Los frameworks no eran “ruedines para humanos”. Eran “el idioma común de todo el equipo”.</p>
+        </blockquote>
+        <div class="text">
+          <span class="who">Un experimento</span>
+          <span class="when">Desarrollador en zenn.dev · feb. 2026</span>
+          <p class="context">Quitó Next.js de un proyecto y lo rehízo en JS vanilla con un agente. Funcionaba, pero el agente desordenaba el código cada vez más. Al volver al framework, el problema desapareció: las convenciones servían de instrucciones.</p>
+          <a href="https://zenn.dev/smartvain/articles/coding-agent-kills-framework-nextjs-reverse-truth?locale=en" target="_blank" rel="noopener">Leer el artículo</a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section aria-labelledby="h-q">
+    <h2 id="h-q">Responde <a href="https://docs.google.com/forms/d/e/1FAIpQLSe8b3VDcdgQS4QMl3YfBdtmy1iWZZv8mxwkw2MugDcNfKwp1g/viewform?usp=publish-editor">en el formulario</a> · un párrafo corto por pregunta</h2>
+    <ol class="questions">
+      <li><span>¿Para qué usas la IA cuando programas? ¿Y para qué no la usas, o no te fías de ella?</span></li>
+      <li><span>Si la IA escribe el código, ¿para qué sirve un framework? ¿Para ti, para la IA o para el usuario final?</span></li>
+      <li><span>¿Elegirías un framework porque la IA lo conoce mejor, aunque te guste menos?</span></li>
+      <li><span>¿Qué crees que tiene sentido aprender en esta asignatura si la IA puede escribir el código?<span class="key">La que más me interesa. Sé sincero.</span></span></li>
+    </ol>
+    <p class="variant"><strong>Si quieres:</strong> pregúntale a una IA y cuéntame en qué <em>no</em> estás de acuerdo con lo que te dice.</p>
+  </section>
+
+  <footer class="rules">
+    <p><strong>Anónimo</strong>Una respuesta por persona en el formulario. No pongas tu nombre.</p>
+    <p><strong>Tu opinión</strong>Prefiero dos frases tuyas que cinco párrafos de una IA.</p>
+  </footer>
+</main>
+
+</body></html>
