@@ -198,7 +198,7 @@ function Carrito() {
 <!-- style: --colloquium-code-size: 0.68em -->
 <!-- padding: compact -->
 
-## Opción C: rastreamos dependencias en ejecución (Vue, Solid)
+## Opción C: rastreamos dependencias en ejecución (Vue, Solid, Svelte 5, Angular 21)
 
 ```javascript
 import { reactive, computed, effect } from 'vue'
@@ -314,9 +314,9 @@ export function computed(fn) {
 ---
 
 <!-- columns: 55/45 -->
-## Rastrear sin *proxies*: *signals* (SolidJS)
+## Rastrear sin *proxies*: *signals* en Solid
 
-El *framework* SolidJS usa **signals** y **effects**, ideas muy similares a las de Vue
+El *framework* SolidJS  usa **signals** y **effects**, ideas muy similares a las de Vue
 
 ```javascript
 import { createSignal, createEffect } from "solid-js";
@@ -353,6 +353,23 @@ En Svelte 5 la sintaxis son las [*runes*](https://svelte.dev/blog/runes) (direct
 ```
 
 <span class="text-sm">[Ejemplo online](https://svelte.dev/playground/d594d05ff4f448d7b56ebb403dfbe5d1?version=5.1.3)</span>
+
+---
+
+## Angular: de "lo reviso todo" a *signals*
+
+- **Con Zone.js** (2016-2025): Zone.js intercepta todo lo asíncrono (eventos, temporizadores, peticiones) y avisa de que *algo* puede haber cambiado. Angular **no sabe qué**: recorre el árbol de componentes comparando cada *binding* de las plantillas con su valor anterior
+- **Con *signals*** (estables desde la v20; sin Zone.js por defecto en proyectos nuevos desde la v21): cuando cambia una *signal* que lee una plantilla, Angular **sabe qué vista** refrescar
+
+```javascript
+count = signal(0)
+doble = computed(() => this.count() * 2)
+// en la plantilla: {{ count() }} y {{ doble() }}
+```
+
+¿Cómo sabemos qué recalcular?: pasa de "no lo sabe" (como React, pero sin DOM virtual) a "lo rastrea en ejecución" (como Vue o Solid)
+
+<!-- notes: Angular resume la historia del tema en un solo framework: AngularJS (2010) hacía dirty checking; Angular 2+ con Zone.js sabía CUÁNDO revisar pero no QUÉ; con signals rastrea dependencias como Vue o Solid. Muchos proyectos reales conviven con las dos cosas porque están a medio migrar. Como en Solid, una signal se lee llamándola como función: count(). Comprobado ejecutándolo (Angular 22.2): computed es perezoso y cacheado (un computed que nadie lee no se ejecuta) y el diamante da 3 → 6. -->
 
 ---
 
@@ -490,8 +507,6 @@ estado.a = 2
 </g>
 </svg>
 
-<!-- notes: Primero que lo predigan: la respuesta la dan las dos traspas siguientes, paso a paso. Vue imprime solo c = 6 (comprobado ejecutándolo; lo mismo en Svelte 5, Solid y Preact). Una implementación ingenua, como nuestra versión de 25 líneas con derivados hechos con effects, puede imprimir c = 4 y luego c = 6. -->
-
 ---
 
 ## El diamante con propagación ingenua
@@ -530,7 +545,16 @@ estado.a = 2
 
 [La demo online con versión ingenua](https://runjs.app/play?s=PTAECUFMEMGMBcCWA3RATabQCI2VAFYCuA5kZPJNgFygA20oiAtgA52TOQB28ciAZ+6g8oAEwBWegFvuMAM6gA1KFgB7NkUpoAUOu7z4IyK0UBeUHIDuoAOowA1gFlorABQBKUN5Cg1AIwIKNVAAWgA+UDdWACc1VkRIDCwI0ABlCmNQSAAzHMgEeQ8dDiNcgvg1AEEEFBCLbiI6Oh0dHKJuWrVheBi4BzcAggAaUFj4rwBvHW9EHKiAQnKEatrkNS8YiiIY7hn6TLxTAHlA0Asj+QA6EgpBwOLZ+bcFy9OCL0ur+Tuh0bezg1IDYXO4PI8DkYjudjCdAjc7uNWBC5osjp8TPJ3t9EXFWP8TDDrOk7uD9kcrpg0G5lpUakh1sUAL6tdqdJDdUC9RAkW4xe4jMZ4qbkzEI+ACjwAfnF0WFMpyahiAFE4AALGnzMyRXKeZmsjpdYRbOAMyCS0DTbxbeA7YTEgAKcQAHgBPAWjK3eUC3CVqUb40AxKZcvqwAb+sYeADcQe2uwguQ4CFlkcDwdATOG+28Pz9AdGyFGGcmqm6hj8DhhUByyfgOPzY0LxZjoZ5fMGAdbNrtlcz+yZ+raho5wly+QQbhy3BFPjAAHEiNAYhhmGpFJA6Nk8hVQNBeJAYoglWNl4wAI7kUBs2DHuTCOjr7cT+CKffoTDr-b6Cu5GGec5IlLH8jFiSBkBhWlVgZNRYyg+k6kgnJY2nTw4JfaDEIsMCIJZbxdSHXx1E0bRQAdZVwGVAAtY40mOWgflUaA6FgJpGAYIUWEPRhkEgAAvUBL3wZiyESB8Qg4SBh3ZO8yxIpIpxnS1v3LIwYhhE01nNUtkGY8haA6PAckQOQsEHfZSlUE00Hqa9mJ+fYewTL1vF9UBdLocgAJc71UReWBrI2S0rJgGyYV6ch0JfNwAO1YKYiuDyrwsVCvEHftvW9JzjUSvSpMyvD+xZVo9FU7JDE-DSYC0txS2gWgAEZM2KEDQH8GFiNYLQFNinUKpsylQAAKnEFqytgDqNC67QYq8OLIH6tRBpUfxcs8yBih0ccKlmwCywMNQOCuR8SDcAByCazDO0ZYDW8gyQWvgBsYCwxCAA)
 
-<!-- notes: "Ingenua" = avisar a los dependientes en el orden en que se suscribieron y recalcular en el acto. El orden de suscripción no es el del código, sino el orden en que cada derivado se evalúa por primera vez. Con un computed perezoso (se calcula la primera vez que se lee), el effect pide c, c lee a (se suscribe) y solo entonces pide b, que se evalúa y se suscribe a a en segundo lugar: por eso a avisa primero a c y sale el glitch 3 → 4 → 6. Con un computed ansioso (se calcula al crearlo), b se crea y se suscribe primero: a avisa a b (b = 4), b avisa a c (c = 6, el efecto muestra 6) y luego a avisa a c por el camino directo (c = 6 otra vez, el efecto se ejecuta otra vez): 3 → 6 → 6. Moraleja: la propagación ingenua falla siempre, solo cambia cómo. Demo: el mismo programa con las dos versiones de computed de la implementación de 25 líneas y con Vue (carpeta demo-diamante). Las tres salidas, comprobadas ejecutándolas. -->
+<!-- notes: "Ingenua" = avisar a los dependientes en el orden en que se suscribieron y recalcular en el acto. El orden de suscripción no es el del código, sino el orden en que cada derivado se evalúa por primera vez. Con un computed perezoso (se calcula la primera vez que se lee), el effect pide c, c lee a (se suscribe) y solo entonces pide b, que se evalúa y se suscribe a a en segundo lugar: por eso a avisa primero a c y sale el glitch 3 → 4 → 6. Con un computed ansioso (se calcula al crearlo), b se crea y se suscribe primero: a avisa a b (b = 4), b avisa a c (c = 6, el efecto muestra 6) y luego a avisa a c por el camino directo (c = 6 otra vez, el efecto se ejecuta otra vez): 3 → 6 → 6. Moraleja: la propagación ingenua falla siempre, solo cambia cómo. Demo: el mismo programa con las dos versiones de computed de la implementación de 25 líneas y con Vue (carpeta demo-diamante).
+
+Las suscripciones quedan así:
+
+Propiedad	Effects suscritos (en orden)
+a	E_c, E_b
+b	E_c
+c	E_log
+
+ -->
 
 ---
 
@@ -620,13 +644,8 @@ async function incrementar() {
 </template>
 ```
 
-<!-- TODO: crear enlace en el Vue playground -->
-
 
 ---
-
-
-
 
 ## El DOM se actualiza después
 
@@ -643,6 +662,8 @@ async function incrementar() {
 
 ## Por qué conviven modelos tan distintos
 
+<!-- style: --colloquium-font-size: 22px -->
+
 | Año | Hito |
 |---|---|
 | 2010 | **Knockout**: *observables* y *computed* con rastreo automático de dependencias |
@@ -650,8 +671,10 @@ async function incrementar() {
 | 2013 | **React**: renuncia a rastrear, "re-ejecuta y compara" con DOM virtual |
 | 2014 | **Vue**: rastreo con getters/setters (Vue 2), *proxies* desde Vue 3 (2020) |
 | 2016-19 | **Svelte**: reactividad resuelta en compilación |
+| 2016 | **Angular 2+**: Zone.js avisa de que *algo* ha cambiado y se revisan los *bindings* de todo el árbol |
 | 2021 | **SolidJS 1.0**: *signals* de grano fino sin DOM virtual |
 | 2022-24 | *Signals* en Preact, Angular y Svelte 5. Propuesta de estandarización en TC39 |
+| 2025 | **Angular** sin Zone.js por defecto en proyectos nuevos (v21): *signals* para saber qué refrescar |
 | 2025-26 | **React Compiler 1.0**. **Vue Vapor** en *release candidate* |
 
 La idea del rastreo automático ha vuelto, quince años después, a casi todos los *frameworks*... excepto React, que optimiza por otra vía
@@ -860,7 +883,21 @@ Posiblemente la mejor parte del DOM virtual es que le permite al desarrollador d
 
 - Manualmente: `React.memo` (no re-renderizar un componente si sus *props* no cambian), `useMemo`, `useCallback`
 - Automáticamente: **React Compiler** (1.0 estable desde octubre de 2025) analiza el código en tiempo de compilación e inserta la memoización por nosotros
-- Filosofía distinta a la de las *signals*: **mismo modelo mental**, optimizado por debajo, en lugar de cambiar el modelo de reactividad
+
+El código generado por el compilador hace cosas como: "si el mensaje es el mismo que era antes, no renderices nada"
+
+<!-- style: --colloquium-code-size: 0.7em -->
+```javascript
+if ($[6] !== message) {
+  t3 = _jsx(Message, { message, onUpdateMessage: updateMessage })
+  $[6] = message
+  $[7] = t3
+} else {
+  t3 = $[7]          // mismo objeto que en el render anterior
+}
+```
+
+[Demo online: el micro-ejemplo con el React Compiler](https://stackblitz.com/github/ottocol/micro-ejemplo-reactividad/tree/main/react-compiler-demo?file=package.json)
 
 <!-- notes: En nuestro micro-ejemplo, con `React.memo(Message)` (o con React Compiler) `Message` dejaría de ejecutarse al incrementar el contador, porque sus props no cambian. Ojo: `onUpdateMessage` es una función nueva en cada render, así que sin `useCallback` el `memo` no serviría (el compilador se encarga de esto automáticamente). -->
 
@@ -955,7 +992,7 @@ onUpdated(() => console.log('Message se ha re-renderizado'))
 - Modo de compilación opcional, por componente: `<script setup vapor>`
 - Compila la *template* a **operaciones directas sobre el DOM**, como SolidJS o Svelte 5
 - Disponible en Vue 3.6, que en octubre de 2026 está en fase *release candidate* (no estable)
-- Interesante como señal: incluso un *framework* con DOM virtual optimizado se mueve hacia el grano fino
+- Interesante como tendencia: incluso un *framework* con DOM virtual optimizado se mueve hacia el grano fino
 
 ---
 
@@ -965,7 +1002,7 @@ onUpdated(() => console.log('Message se ha re-renderizado'))
 ---
 
 <!-- padding: compact -->
-## SolidJS: los componentes se ejecutan una vez
+## SolidJS: los componentes se ejecutan una única vez
 
 ```javascript
 import { createSignal } from "solid-js";
@@ -993,6 +1030,8 @@ render(()=><Contador/>, document.getElementById("app"))
 ## Qué genera el compilador de SolidJS
 
 SolidJS compila el JSX a código que crea el DOM una vez y **suscribe cada expresión dinámica a sus *signals***. Mirad la solapa "Output".
+
+Cada componente se ejecuta una única vez. Cuando cambia algo se actualizan solamente las dependencias, no el componente entero.
 
 <!-- notes: La estructura base del DOM se crea a partir de la template:
 
@@ -1041,60 +1080,6 @@ Al incrementar **no se ejecuta ningún componente**: solo se actualiza el texto 
 
 ---
 
-<!-- padding: compact -->
-## Preact (1/2): con *hooks*, como React
-
-```javascript
-import { render } from 'preact'
-import { useState, useEffect } from 'preact/hooks'
-import { useSignal, useSignalEffect } from '@preact/signals'
-
-function ConHooks() {
-  const [count, setCount] = useState(0)
-  console.log('🔄 render ConHooks')
-  useEffect(() => console.log('📊 hooks: count =', count), [count])
-  return <div>
-    <p>Contador: {count}</p>
-    <button onClick={() => setCount(c => c + 1)}>+1</button>
-  </div>
-}
-```
-
----
-
-<!-- padding: compact -->
-## Preact (2/2): con *signals*
-
-```javascript
-
-function ConSignals() {
-  const count = useSignal(0)
-  console.log('🔄 render ConSignals')
-  useSignalEffect(() => console.log('📊 signals: count =', count.value))
-  return <div>
-    <p>Contador: {count}</p>
-    <button onClick={() => count.value++}>+1</button>
-  </div>
-}
-
-render(<><ConHooks /><ConSignals /></>, document.getElementById('app'))
-```
-
-<!-- TODO: regenerar el enlace del REPL de Preact con este código -->
-
-<!-- notes: - Con hooks, cada click re-renderiza `ConHooks` (modelo React)
-- Con signals y `{count}` en el JSX, `ConSignals` **no** se re-renderiza: Preact vincula la signal directamente al nodo de texto, sin pasar por el DOM virtual
-- Cambiad `{count}` por `{count.value}`: ahora el componente lee el valor durante el render, queda suscrito y vuelve a re-renderizarse. Hace falta `.value` cuando el JSX depende del valor de forma más compleja (p. ej. `{count.value > 0 ? 'positivo' : 'cero'}`)
-- Dentro de componentes hay que usar `useSignal`/`useSignalEffect`; `signal()`/`effect()` crearían una signal/effect nuevo en cada render -->
-
----
-
-Con *signals* en Preact *"podemos evitar el renderizado del DOM virtual y vincular los cambios de la signal directamente a mutaciones del DOM"*
-
-<span class="text-sm">[Documentación de Preact](https://preactjs.com/guide/v10/signals/#rendering-optimizations) (traducido)</span>
-
----
-
 <!-- layout: section-break -->
 ## Recapitulando
 
@@ -1118,11 +1103,6 @@ Vue está en medio: rastrea dependencias, pero por componente y con DOM virtual
 ## Trampas típicas en Vue (y en el grano fino en general)
 
 ```javascript
-// ❌ Desestructurar un reactive: las variables son copias, no reactivas
-const estado = reactive({ count: 0 })
-let { count } = estado
-// ✅ const { count } = toRefs(estado)   // count.value sigue conectado
-
 // ❌ En <script> un ref se usa con .value (en la template no hace falta)
 const n = ref(0)
 n++
@@ -1133,8 +1113,6 @@ let lista = reactive([])
 lista = await obtenerItems()
 // ✅ const lista = ref([]);  lista.value = await obtenerItems()
 ```
-
-Lo mismo en SolidJS: `function Saludo({ nombre })` desestructura las *props* y **pierde la reactividad** (hay que usar `props.nombre`)
 
 
 ---
@@ -1150,26 +1128,7 @@ Lo mismo en SolidJS: `function Saludo({ nombre })` desestructura las *props* y *
 | **Svelte 3/4** | Análisis en compilación | Nodo (código generado) | *Runtime* mínimo |
 | **Svelte 5** | Rastreo en ejecución (*signals*) | Nodo | Sigue siendo un compilador |
 | **SolidJS** | Rastreo en ejecución (*signals*) | Nodo | Los componentes se ejecutan una vez |
-| **Preact + signals** | Rastreo en ejecución (*signals*) | Nodo con `{signal}`, componente con `.value` | Convive con los *hooks* |
-
----
-
-<!-- layout: section-break -->
-## ¿Lo has entendido?
-
----
-
-## Predice la salida
-
-1. En el micro-ejemplo de **Vue**, pulsamos "Actualizar mensaje". ¿Qué `onUpdated` se imprimen?
-2. En el micro-ejemplo de **React**, ¿y en el mismo caso?
-3. En el ejemplo de **Preact**, cambiamos `{count}` por `{count.value * 2}` en `ConSignals`. ¿Qué cambia en la consola al pulsar el botón?
-4. En nuestra implementación de 25 líneas, ¿qué pasa si hacemos `estado.cantidad = 5` **dos veces** seguidas? ¿Y en Vue con `watchEffect`?
-
-<!-- notes: 1. App y Message (Counter no: sus props no cambian)
-2. App, Counter y Message
-3. Ahora aparece "render ConSignals" en cada click: el componente lee `.value` durante el render y queda suscrito
-4. En la nuestra el effect se ejecuta dos veces (propagación síncrona, sin batching, y sin comprobar si el valor cambia realmente). En Vue, `watchEffect` agrupa los cambios y se ejecuta una sola vez antes del siguiente render; además el trigger no se dispara si el valor nuevo es igual al anterior -->
+| **Angular** | Antes: no rastrea (Zone.js + revisar el árbol). Ahora: rastreo en ejecución (*signals*) | Componente, sin DOM virtual | Con la estrategia antigua (`Eager`) revisa todo el subárbol |
 
 ---
 
@@ -1178,14 +1137,10 @@ Lo mismo en SolidJS: `function Saludo({ nombre })` desestructura las *props* y *
 
 ## Referencias
 
-- [Kristen Hewell Garrett, serie "What Is Reactivity?"](https://www.pzuraq.com/blog/what-is-reactivity) (reactividad en abstracto, comparando modelos)
-- [Ryan Carniato, "A Hands-on Introduction to Fine-Grained Reactivity"](https://dev.to/ryansolid/a-hands-on-introduction-to-fine-grained-reactivity-3ndf) (cómo funcionan las *signals* por dentro)
-- [Dan Abramov, "React as a UI Runtime"](https://overreacted.io/react-as-a-ui-runtime/) (el modelo de React)
+- [Ryan Carniato, "A Hands-on Introduction to Fine-Grained Reactivity"](https://dev.to/ryansolid/a-hands-on-introduction-to-fine-grained-reactivity-3ndf) (cómo funcionan las *signals* por dentro. Ryan Carniato es el *lead developer* de SolidJS y el que la desarrolló originalmente)
+- [Dan Abramov, "React as a UI Runtime"](https://overreacted.io/react-as-a-ui-runtime/) (el modelo de React, contesta a por qué React no usa reactividad de grano fino)
 - [Propuesta TC39 de *signals*, sección "Background: Why Signals?"](https://github.com/tc39/proposal-signals#background-why-signals)
 - [Vue: Reactivity in Depth](https://vuejs.org/guide/extras/reactivity-in-depth.html) (incluye la relación con las *signals* de otros *frameworks*)
 - 📺 [Evan You on Vue.js: Seeking the Balance in Framework Design | JSConf.Asia 2019](https://www.youtube.com/watch?v=ANtSWq-zI0s)
 - 📺 [Reactivity in Vue 3: How does it work?](https://www.youtube.com/watch?v=NZfNS4sJ8CI)
 - 📺 [A comparison of the Reactivity Concepts in Angular, React, Vue and Svelte by Jonas Bandi](https://www.youtube.com/watch?v=M3KdDcse7EU) (+[repo](https://github.com/jbandi/framework-reactivity-2023) con los ejemplos)
-- Para profundizar (académico): Bainomugisha et al., *A Survey on Reactive Programming*, ACM Computing Surveys (2013); Mokhov, Mitchell y Peyton Jones, *Build Systems à la Carte*, ICFP (2018)
-
-<!-- notes: Verificar las URLs de los blogs (pzuraq, dev.to) antes de publicar -->
