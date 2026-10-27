@@ -2860,7 +2860,7 @@ estado.a = 2
 <div class="colloquium-footer"><div class="colloquium-footer-left">Reactividad</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">30 / 62</span></div></div>
 </section>
 
-<section class="slide slide--content cols-58-42" style="--colloquium-columns: minmax(0, 58fr) minmax(0, 42fr);" data-index="30" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy01OC00MiAtLT4KCiMjICpCYXRjaGluZyogZW4gUmVhY3QKCmBgYGphdmFzY3JpcHQKZnVuY3Rpb24gQ29udGFkb3IoKSB7CiAgY29uc3QgW2NvdW50LCBzZXRDb3VudF0gPSB1c2VTdGF0ZSgwKQogIGNvbnNvbGUubG9nKCdyZW5kZXInLCBjb3VudCkKCiAgZnVuY3Rpb24gc3VtYXJUcmVzKCkgewogICAgc2V0Q291bnQoY291bnQgKyAxKQogICAgc2V0Q291bnQoY291bnQgKyAxKQogICAgc2V0Q291bnQoY291bnQgKyAxKQogIH0KICByZXR1cm4gPGJ1dHRvbiBvbkNsaWNrPXtzdW1hclRyZXN9Pntjb3VudH08L2J1dHRvbj4KfQpgYGAKCnx8fAoKQWwgcHVsc2FyIGVsIGJvdMOzbiwgwr9jdcOhbnRhcyB2ZWNlcyBzZSByZW5kZXJpemE/IMK/Q3XDoW50byB2YWxlIGBjb3VudGAgZGVzcHXDqXM/Cgo8IS0tIG5vdGVzOiBSZXNwdWVzdGE6IHVuIHNvbG8gcmVuZGVyIChSZWFjdCBhZ3J1cGEgbGFzIGFjdHVhbGl6YWNpb25lcyBkZWwgbWlzbW8gZXZlbnRvKSB5IGBjb3VudGAgdmFsZSAxLCBubyAzOiBsYXMgdHJlcyBsbGFtYWRhcyB1c2FuIGVsIGBjb3VudGAgZGUgZXN0ZSByZW5kZXIgKDApLiBDb24gYHNldENvdW50KGMgPT4gYyArIDEpYCBzw60gc3VtYSAzLCBwb3JxdWUgY2FkYSBhY3R1YWxpemFkb3IgcmVjaWJlIGVsIHZhbG9yIHBlbmRpZW50ZS4gLS0+">
+<section class="slide slide--content cols-58-42" style="--colloquium-columns: minmax(0, 58fr) minmax(0, 42fr);" data-index="30" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy01OC00MiAtLT4KCiMjICpCYXRjaGluZyogZW4gUmVhY3QKCmBgYGphdmFzY3JpcHQKZnVuY3Rpb24gQ29udGFkb3IoKSB7CiAgY29uc3QgW2NvdW50LCBzZXRDb3VudF0gPSB1c2VTdGF0ZSgwKQogIGNvbnNvbGUubG9nKCdyZW5kZXInLCBjb3VudCkKCiAgZnVuY3Rpb24gc3VtYXJUcmVzKCkgewogICAgc2V0Q291bnQoY291bnQgKyAxKQogICAgc2V0Q291bnQoY291bnQgKyAxKQogICAgc2V0Q291bnQoY291bnQgKyAxKQogIH0KICByZXR1cm4gPGJ1dHRvbiBvbkNsaWNrPXtzdW1hclRyZXN9Pntjb3VudH08L2J1dHRvbj4KfQpgYGAKCnx8fAoKQWwgcHVsc2FyIGVsIGJvdMOzbiwgwr9jdcOhbnRhcyB2ZWNlcyBzZSByZW5kZXJpemE/ICgqYmF0Y2hpbmcqKSDCv0N1w6FudG8gdmFsZSBgY291bnRgIGRlc3B1w6lzPyAocGlzdGE6IGhheSB1biAqYnVnKikKCjwhLS0gbm90ZXM6IFJlc3B1ZXN0YTogdW4gc29sbyByZW5kZXIgKFJlYWN0IGFncnVwYSBsYXMgYWN0dWFsaXphY2lvbmVzIGRlbCBtaXNtbyBldmVudG8pIHkgYGNvdW50YCB2YWxlIDEsIG5vIDM6IGxhcyB0cmVzIGxsYW1hZGFzIHVzYW4gZWwgYGNvdW50YCBkZSBlc3RlIHJlbmRlciAoMCkuIENvbiBgc2V0Q291bnQoYyA9PiBjICsgMSlgIHPDrSBzdW1hIDMsIHBvcnF1ZSBjYWRhIGFjdHVhbGl6YWRvciByZWNpYmUgZWwgdmFsb3IgcGVuZGllbnRlLiAtLT4=">
 <h2><em>Batching</em> en React</h2>
 <div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);"><div class="col"><pre><code class="language-javascript">function Contador() {
   const [count, setCount] = useState(0)
@@ -2873,29 +2873,35 @@ estado.a = 2
   }
   return &lt;button onClick={sumarTres}&gt;{count}&lt;/button&gt;
 }
-</code></pre></div><div class="col"><p>Al pulsar el botón, ¿cuántas veces se renderiza? ¿Cuánto vale <code>count</code> después?</p></div></div>
+</code></pre></div><div class="col"><p>Al pulsar el botón, ¿cuántas veces se renderiza? (<em>batching</em>) ¿Cuánto vale <code>count</code> después? (pista: hay un <em>bug</em>)</p></div></div>
 <div class="colloquium-footer"><div class="colloquium-footer-left">Reactividad</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">31 / 62</span></div></div>
 </section>
 
-<section class="slide slide--content pad-compact" data-index="31" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogcGFkLWNvbXBhY3QgLS0+CgojIyAqQmF0Y2hpbmcqIGVuIFZ1ZTogYG5leHRUaWNrYAoKYGBgaHRtbAo8c2NyaXB0IHNldHVwPgppbXBvcnQgeyByZWYsIG5leHRUaWNrIH0gZnJvbSAndnVlJwpjb25zdCBjb3VudCA9IHJlZigwKQpjb25zdCBlbCA9IHJlZihudWxsKQoKYXN5bmMgZnVuY3Rpb24gaW5jcmVtZW50YXIoKSB7CiAgY291bnQudmFsdWUrKwogIGNvbnNvbGUubG9nKGVsLnZhbHVlLnRleHRDb250ZW50KSAgIC8vIHRvZGF2w61hICIwIgogIGF3YWl0IG5leHRUaWNrKCkKICBjb25zb2xlLmxvZyhlbC52YWx1ZS50ZXh0Q29udGVudCkgICAvLyBhaG9yYSAiMSIKfQo8L3NjcmlwdD4KCjx0ZW1wbGF0ZT4KICA8cCByZWY9ImVsIiBAY2xpY2s9ImluY3JlbWVudGFyIj57eyBjb3VudCB9fTwvcD4KPC90ZW1wbGF0ZT4KYGBg">
+<section class="slide slide--content pad-compact" data-index="31" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogcGFkLWNvbXBhY3QgLS0+CgojIyAqQmF0Y2hpbmcqIGVuIFZ1ZTogYG5leHRUaWNrYAoKYGBgaHRtbAo8c2NyaXB0IHNldHVwPgppbXBvcnQgeyByZWYsIG5leHRUaWNrLCBvblVwZGF0ZWQgfSBmcm9tICd2dWUnCmNvbnN0IGNvdW50ID0gcmVmKDApCmNvbnN0IGVsID0gcmVmKG51bGwpCgpvblVwZGF0ZWQoKCkgPT4gY29uc29sZS5sb2coJ3JlLXJlbmRlcicpKSAgIC8vIHNlIGltcHJpbWUgVU5BIHZlegoKYXN5bmMgZnVuY3Rpb24gaW5jcmVtZW50YXIoKSB7CiAgY291bnQudmFsdWUrKwogIGNvdW50LnZhbHVlKysKICBjb3VudC52YWx1ZSsrCiAgY29uc29sZS5sb2coY291bnQudmFsdWUpICAgICAgICAgICAgLy8gMzogZWwgZGF0byB5YSBoYSBjYW1iaWFkbwogIGNvbnNvbGUubG9nKGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJwYXIiKS5pbm5lclRleHQpICAgLy8gIjAiOiBlbCBET00gdG9kYXbDrWEgbm8KICBhd2FpdCBuZXh0VGljaygpCiAgY29uc29sZS5sb2coZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInBhciIpLmlubmVyVGV4dCkgICAvLyAiMyIKfQo8L3NjcmlwdD4KCjx0ZW1wbGF0ZT4KICA8cCBpZD0icGFyIiBAY2xpY2s9ImluY3JlbWVudGFyIj57eyBjb3VudCB9fTwvcD4KPC90ZW1wbGF0ZT4KYGBgCgpbRGVtbyBvbmxpbmVdKGh0dHBzOi8vcGxheS52dWVqcy5vcmcvI2VOcWxVOXR1RXpFUS9aV1JYN0pSdzZaU0VBOVZFdEZDSG9wRWl5RGx5Ukl5M2tucTFqdGUrWkltUlB0SmZBVS94bmh6YVlSUWhjUysrY3pNMlRQbjJGdHgyVFRsS3FHNEVPT2d2V2tpQkl5cG1Vb3lkZU44aEMxNFhBeUFjQjNuUmo4T3dORmRVNm1JRmJTdzhLNkdIcy8zSkdsSElZSjJpU0pNOGxCeDNqK2dhUGNRSldzWmxYUmtLWW8rVEtZOFI4RlpMSzFiRmoyUHJ6eFNoYjdYN3dQQWNNaWlnUFY0VXlQYzNWekNDbjlrRWhVMnBHR1JTRWZqQ0F4cGp6VlNWSjVKdDVKZ0o2ZGNLWnZ3N094ZmdXY2xKOFVzNVBpeG90RkYzb3BYY0xCUmNLOUFxL3E3VVpYN2s2TnlPbVZSNVJManpIYjZyamJYVlNGRm83d1UvZElRb1orenYvdGRwVGlYb21OL2Yvc1JvcXZVNnRkUEJkUXhxeWRsNGpHTmdyMzg3NytOcEpEVVNob1BkemVBcytkRHhMcXhIQkNmQU1ZTm1HcXk1NEMzMnZLLytYaGl1QlRUN1hhZmZ0dU9oL2tHallkSEVqRVFNYkRPaFZtV0Q4RVIzN2N1SHltMHF4dGowZDgyT2NPUU4rOHF1YWFzZFU4Zk9pejZoSU1EcnU5UlAvNEZmd2pyakVueHlXTkF2MElwampYV3lKYnN5ck12TjJ6QVNiRjJWYkxjL1VMeE03TEhLV3ZjdFYwbHFsajJTVituOXJwN05ZYVc4ekJiUjZSd1dDb0x6WjF0MXk4RlA1cDNMNnorTEhkVXZ1N21PQ04yOFZzTVg5Rm5WcmJ3VFhsZWprVDdHOGt1UVhNPSk=">
 <h2><em>Batching</em> en Vue: <code>nextTick</code></h2>
 <div class="slide-content"><pre><code class="language-html">&lt;script setup&gt;
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onUpdated } from 'vue'
 const count = ref(0)
 const el = ref(null)
 
+onUpdated(() =&gt; console.log('re-render'))   // se imprime UNA vez
+
 async function incrementar() {
   count.value++
-  console.log(el.value.textContent)   // todavía &quot;0&quot;
+  count.value++
+  count.value++
+  console.log(count.value)            // 3: el dato ya ha cambiado
+  console.log(document.getElementById(&quot;par&quot;).innerText)   // &quot;0&quot;: el DOM todavía no
   await nextTick()
-  console.log(el.value.textContent)   // ahora &quot;1&quot;
+  console.log(document.getElementById(&quot;par&quot;).innerText)   // &quot;3&quot;
 }
 &lt;/script&gt;
 
 &lt;template&gt;
-  &lt;p ref=&quot;el&quot; @click=&quot;incrementar&quot;&gt;{{ count }}&lt;/p&gt;
+  &lt;p id=&quot;par&quot; @click=&quot;incrementar&quot;&gt;{{ count }}&lt;/p&gt;
 &lt;/template&gt;
 </code></pre>
+<p><a href="https://play.vuejs.org/#eNqlU9tuEzEQ/ZWRX7JRw6ZSEA9VEtFCHopEiyDlyRIy3knq1jte+ZImRPtJfAU/xnhzaYRQhcS++czM2TPn2Ftx2TTlKqG4EOOgvWkiBIypmUoydeN8hC14XAyAcB3nRj8OwNFdU6mIFbSw8K6GHs/3JGlHIYJ2iSJM8lBx3j+gaPcQJWsZlXRkKYo+TKY8R8FZLK1bFj2PrzxShb7X7wPAcMiigPV4UyPc3VzCCn9kEhU2pGGRSEfjCAxpjzVSVJ5Jt5JgJ6dcKZvw7OxfgWclJ8Us5PixotFF3opXcLBRcK9Aq/q7UZX7k6NyOmVR5RLjzHb6rjbXVSFFo7wU/dIQoZ+zv/tdpTiXomN/f/sRoqvU6tdPBdQxqydl4jGNgr3877+NpJDUShoPdzeAs+dDxLqxHBCfAMYNmGqy54C32vK/+XhiuBTT7XafftuOh/kGjYdHEjEQMbDOhVmWD8ER37cuHym0qxtj0d82OcOQN+8quaasdU8fOiz6hIMDru9RP/4FfwjrjEnxyWNAv0IpjjXWyJbsyrMvN2zASbF2VbLc/ULxM7LHKWvctV0lqlj2SV+n9rp7NYaW8zBbR6RwWCoLzZ1t1y8FP5p3L6z+LHdUvu7mOCN28VsMX9FnVrbwTXlejkT7G8kuQXM=">Demo online</a></p>
 </div>
 <div class="colloquium-footer"><div class="colloquium-footer-left">Reactividad</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">32 / 62</span></div></div>
 </section>
@@ -3243,7 +3249,7 @@ render(()=&gt;&lt;Contador/&gt;, document.getElementById(&quot;app&quot;))
 <div class="colloquium-footer"><div class="colloquium-footer-left">Reactividad</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">56 / 62</span></div></div>
 </section>
 
-<section class="slide slide--content pad-compact" data-index="56" data-chapter="6" data-colloquium-md="PCEtLSBjbGFzczogcGFkLWNvbXBhY3QgLS0+CgojIyBFbCBtaWNyby1lamVtcGxvIGVuIFNvbGlkSlMKCmBgYGphdmFzY3JpcHQKZnVuY3Rpb24gQ291bnRlcihwcm9wcykgewogIGNvbnNvbGUubG9nKCdDb3VudGVyIHNlIGVqZWN1dGEnKSAgIC8vIHNvbG8gdW5hIHZleiwgYWwgY3JlYXJsbwogIHJldHVybiA8ZGl2PgogICAgPGgxPntwcm9wcy5jb3VudH08L2gxPgogICAgPGJ1dHRvbiBvbkNsaWNrPXtwcm9wcy5vbkluY3JlbWVudH0+SW5jcmVtZW50YXI8L2J1dHRvbj4KICA8L2Rpdj4KfQoKZnVuY3Rpb24gQXBwKCkgewogIGNvbnN0IFtjb3VudCwgc2V0Q291bnRdID0gY3JlYXRlU2lnbmFsKDApCiAgY29uc29sZS5sb2coJ0FwcCBzZSBlamVjdXRhJykgICAgICAgLy8gc29sbyB1bmEgdmV6LCBhbCBjcmVhcmxvCiAgcmV0dXJuIDxDb3VudGVyIGNvdW50PXtjb3VudCgpfSBvbkluY3JlbWVudD17KCkgPT4gc2V0Q291bnQoY291bnQoKSArIDEpfSAvPgp9CmBgYAoKQWwgaW5jcmVtZW50YXIgKipubyBzZSBlamVjdXRhIG5pbmfDum4gY29tcG9uZW50ZSoqOiBzb2xvIHNlIGFjdHVhbGl6YSBlbCB0ZXh0byBkZWwgYDxoMT5gCgo8IS0tIFRPRE86IGNyZWFyIGVubGFjZSBlbiBlbCBwbGF5Z3JvdW5kIGRlIFNvbGlkIChhw7FhZGllbmRvIE1lc3NhZ2UpIC0tPgoKPCEtLSBub3RlczogYGNvdW50PXtjb3VudCgpfWAgbm8gcGFzYSB1biBuw7ptZXJvOiBlbCBjb21waWxhZG9yIGxvIGNvbnZpZXJ0ZSBlbiB1biBnZXR0ZXIsIHkgcG9yIGVzbyBgcHJvcHMuY291bnRgIHNpZ3VlIHNpZW5kbyByZWFjdGl2byBkZW50cm8gZGUgYENvdW50ZXJgLiAtLT4=">
+<section class="slide slide--content pad-compact" data-index="56" data-chapter="6" data-colloquium-md="PCEtLSBjbGFzczogcGFkLWNvbXBhY3QgLS0+CgojIyBFbCBtaWNyby1lamVtcGxvIGVuIFNvbGlkSlMKCmBgYGphdmFzY3JpcHQKZnVuY3Rpb24gQ291bnRlcihwcm9wcykgewogIGNvbnNvbGUubG9nKCdDb3VudGVyIHNlIGVqZWN1dGEnKSAgIC8vIHNvbG8gdW5hIHZleiwgYWwgY3JlYXJsbwogIHJldHVybiA8ZGl2PgogICAgPGgxPntwcm9wcy5jb3VudH08L2gxPgogICAgPGJ1dHRvbiBvbkNsaWNrPXtwcm9wcy5vbkluY3JlbWVudH0+SW5jcmVtZW50YXI8L2J1dHRvbj4KICA8L2Rpdj4KfQoKZnVuY3Rpb24gQXBwKCkgewogIGNvbnN0IFtjb3VudCwgc2V0Q291bnRdID0gY3JlYXRlU2lnbmFsKDApCiAgY29uc29sZS5sb2coJ0FwcCBzZSBlamVjdXRhJykgICAgICAgLy8gc29sbyB1bmEgdmV6LCBhbCBjcmVhcmxvCiAgcmV0dXJuIDxDb3VudGVyIGNvdW50PXtjb3VudCgpfSBvbkluY3JlbWVudD17KCkgPT4gc2V0Q291bnQoY291bnQoKSArIDEpfSAvPgp9CmBgYAoKQWwgaW5jcmVtZW50YXIgKipubyBzZSBlamVjdXRhIG5pbmfDum4gY29tcG9uZW50ZSoqOiBzb2xvIHNlIGFjdHVhbGl6YSBlbCB0ZXh0byBkZWwgYDxoMT5g">
 <h2>El micro-ejemplo en SolidJS</h2>
 <div class="slide-content"><pre><code class="language-javascript">function Counter(props) {
   console.log('Counter se ejecuta')   // solo una vez, al crearlo
@@ -3260,7 +3266,7 @@ function App() {
 }
 </code></pre>
 <p>Al incrementar <strong>no se ejecuta ningún componente</strong>: solo se actualiza el texto del <code>&lt;h1&gt;</code></p>
-<!-- TODO: crear enlace en el playground de Solid (añadiendo Message) --></div>
+</div>
 <div class="colloquium-footer"><div class="colloquium-footer-left">Reactividad</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">57 / 62</span></div></div>
 </section>
 
