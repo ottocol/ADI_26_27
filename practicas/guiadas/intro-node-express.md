@@ -613,6 +613,9 @@ Volvemos a arrancar `app.js` con `npm run dev`. Abrir una URL en el navegador si
 
 Los comandos siguientes están escritos para Bash o Zsh, como las terminales habituales de Linux y macOS. En PowerShell se puede usar `Invoke-RestMethod`; las reglas para entrecomillar JSON pueden variar respecto a estos ejemplos.
 
+> Como cliente REST con interfaz gráfico os recomendamos usar [Bruno](https://www.usebruno.com/), se parece mucho a Postman pero es bastante más ligero.
+
+
 ### Consultar usuarios
 
 ```bash
