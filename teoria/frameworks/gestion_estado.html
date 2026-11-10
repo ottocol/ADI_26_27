@@ -1,0 +1,4236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestión de estado en frameworks JS</title>
+
+
+<!-- KaTeX for LaTeX math -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+
+<!-- Chart.js for inline charts -->
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<!-- highlight.js for code syntax highlighting -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github.min.css">
+<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+
+<style>
+/* Colloquium Default Theme */
+
+/* ===== Custom Properties ===== */
+:root {
+    --colloquium-bg: #ffffff;
+    --colloquium-text: #1a1a2e;
+    --colloquium-heading: #16213e;
+    --colloquium-accent: #0f3460;
+    --colloquium-link: #e94560;
+    --colloquium-code-bg: #f4f4f8;
+    --colloquium-code-text: #1a1a2e;
+    --colloquium-muted: #6b7280;
+    --colloquium-border: #e5e7eb;
+    --colloquium-progress-bg: #e5e7eb;
+    --colloquium-progress-fill: #0f3460;
+
+    --colloquium-font-body: "Inter", "Helvetica Neue", Arial, sans-serif;
+    --colloquium-font-heading: "Inter", "Helvetica Neue", Arial, sans-serif;
+    --colloquium-font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
+    /* 16:9 reference dimensions — slides are authored at this size and scaled */
+    --colloquium-slide-width: 1280;
+    --colloquium-slide-height: 720;
+    --colloquium-slide-padding: 60px;
+    --colloquium-chapter-bar-height: 30px;
+
+    /* Text size: base size of slide text, size of code blocks relative to it,
+       and a live multiplier the presenter changes with +/- (see presentation.js) */
+    --colloquium-font-size: 24px;
+    --colloquium-code-size: 0.75em;
+    --colloquium-font-scale: 1;
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--colloquium-font-body);
+    color: var(--colloquium-text);
+    background: #000;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Slide Container — 16:9 scaling ===== */
+/* The deck is a fixed 1280x720 canvas that gets CSS-transformed to fit the viewport */
+.colloquium-deck {
+    width: 1280px;
+    height: 720px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    background: var(--colloquium-bg);
+    overflow: hidden;
+}
+
+.slide {
+    display: none;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 1280px;
+    height: 720px;
+    padding: var(--colloquium-slide-padding);
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    font-size: calc(var(--colloquium-font-size) * var(--colloquium-font-scale));
+    line-height: 1.5;
+    background: var(--colloquium-bg);
+}
+
+.slide.active {
+    display: flex;
+}
+
+/* ===== Typography ===== */
+.slide h1 {
+    font-family: var(--colloquium-font-heading);
+    font-size: 2.2em;
+    font-weight: 700;
+    color: var(--colloquium-heading);
+    margin-bottom: 0.4em;
+    line-height: 1.2;
+}
+
+.slide h2 {
+    font-family: var(--colloquium-font-heading);
+    font-size: 1.6em;
+    font-weight: 600;
+    color: var(--colloquium-heading);
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+}
+
+.slide h3 {
+    font-family: var(--colloquium-font-heading);
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--colloquium-heading);
+    margin-bottom: 0.4em;
+}
+
+.slide p {
+    margin-bottom: 0.8em;
+}
+
+.slide p:last-child {
+    margin-bottom: 0;
+}
+
+/* Step/animate reveals wrap blocks in generated fragment <div>s, which makes a
+   mid-slide paragraph :last-child of its wrapper and strips the 0.8em spacing
+   above -- visually merging it with the next fragment's paragraph. Restore the
+   margin unless the wrapper really is the last block in its container. */
+.slide div.fragment[data-fragment-index]:not(:last-child) > p:last-child {
+    margin-bottom: 0.8em;
+}
+
+.slide strong {
+    font-weight: 600;
+}
+
+.slide em {
+    font-style: italic;
+}
+
+/* ===== Lists ===== */
+.slide ul, .slide ol {
+    margin-bottom: 0.8em;
+    padding-left: 1.4em;
+}
+
+.slide li {
+    margin-bottom: 0.3em;
+}
+
+.slide li::marker {
+    color: var(--colloquium-accent);
+}
+
+/* ===== Links ===== */
+.slide a {
+    color: var(--colloquium-link);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.slide a:hover {
+    border-bottom-color: var(--colloquium-link);
+}
+
+/* ===== Code ===== */
+.slide code {
+    font-family: var(--colloquium-font-mono);
+    font-size: 0.85em;
+    background: var(--colloquium-code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.slide pre {
+    background: var(--colloquium-code-bg);
+    border-radius: 8px;
+    padding: 1em 1.2em;
+    margin-bottom: 0.8em;
+    overflow-x: hidden;
+    font-size: var(--colloquium-code-size);
+    line-height: 1.5;
+}
+
+.slide pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ===== Images ===== */
+.slide img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
+.slide .slide-content {
+    flex: 1;
+    min-height: 0;
+    overflow: visible;
+}
+
+.slide .slide-content img {
+    max-height: calc(720px - var(--colloquium-slide-padding) * 2 - 100px);
+    display: block;
+}
+
+.colloquium-iframe-container {
+    max-width: 100%;
+}
+
+.colloquium-iframe {
+    display: block;
+    max-width: 100%;
+}
+
+/* Remote iframe contents are interactive on screen but unreliable in browser
+   print output. Export captures real page snapshots for print; the linked
+   card is a fallback when a snapshot could not be captured. Both are
+   print-only. */
+.colloquium-iframe-print-fallback,
+.colloquium-iframe-print-snapshot {
+    display: none;
+}
+
+.align-center .slide-content > .colloquium-iframe-container {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.align-left .slide-content > .colloquium-iframe-container {
+    margin-right: auto;
+}
+
+.align-right .slide-content > .colloquium-iframe-container {
+    margin-left: auto;
+}
+
+.slide figure.colloquium-figure {
+    margin: 0 auto 0.8em;
+    max-width: 100%;
+    width: fit-content;
+}
+
+.slide figure.colloquium-figure > img {
+    display: block;
+}
+
+.slide figure.colloquium-figure > figcaption {
+    margin-top: 0.45em;
+    font-size: 0.6em;
+    line-height: 1.35;
+    color: var(--colloquium-muted);
+}
+
+.slide.figure-caption,
+.slide.figure-captions {
+    counter-reset: colloquium-figure;
+}
+
+.slide.figure-caption figure.colloquium-figure,
+.slide.figure-captions figure.colloquium-figure {
+    counter-increment: colloquium-figure;
+}
+
+.slide.figure-caption figure.colloquium-figure > figcaption::before,
+.slide.figure-captions figure.colloquium-figure > figcaption::before {
+    content: "Figure " counter(colloquium-figure) ": ";
+    color: var(--colloquium-heading);
+    font-weight: 600;
+}
+
+/* ===== Box ===== */
+.colloquium-box {
+    border-radius: 18px;
+    padding: 0.85em 1em;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.colloquium-box--accent {
+    background: var(--colloquium-accent);
+    color: white;
+}
+
+.colloquium-box--muted {
+    background: var(--colloquium-code-bg);
+    color: var(--colloquium-text);
+}
+
+.colloquium-box--surface {
+    background: color-mix(in srgb, var(--colloquium-bg) 85%, white 15%);
+    color: var(--colloquium-text);
+    border: 1px solid var(--colloquium-border);
+}
+
+.colloquium-box--align-center {
+    text-align: center;
+}
+
+.colloquium-box--align-right {
+    text-align: right;
+}
+
+.colloquium-box-title {
+    font-weight: 700;
+    margin-bottom: 0.35em;
+}
+
+.colloquium-box-content > :first-child {
+    margin-top: 0;
+}
+
+.colloquium-box-content > :last-child {
+    margin-bottom: 0;
+}
+
+.colloquium-box ul,
+.colloquium-box ol {
+    margin-bottom: 0;
+    padding-left: 1.25em;
+}
+
+.colloquium-box li::marker {
+    color: var(--colloquium-accent);
+}
+
+.colloquium-box--compact .colloquium-box-title {
+    margin-bottom: 0.25em;
+}
+
+.colloquium-box--compact .colloquium-box-content p {
+    margin: 0.3em 0;
+}
+
+.colloquium-box--compact ul,
+.colloquium-box--compact ol {
+    margin-top: 0.35em;
+    margin-bottom: 0;
+    padding-left: 1.2em;
+}
+
+.colloquium-box--compact li {
+    margin-bottom: 0.08em;
+    line-height: 1.14;
+}
+
+.colloquium-box--compact li + li {
+    margin-top: 0.02em;
+}
+
+.colloquium-box--accent li::marker {
+    color: white;
+}
+
+.colloquium-box--accent a,
+.colloquium-box--accent strong,
+.colloquium-box--accent em,
+.colloquium-box--accent code {
+    color: inherit;
+}
+
+.colloquium-box--accent code {
+    background: color-mix(in srgb, black 12%, transparent);
+}
+
+/* ===== Charts ===== */
+.colloquium-chart-container {
+    width: 100%;
+    height: 400px;
+    margin: 0.5em 0;
+}
+
+.slide .slide-content img.colloquium-chart-print {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    max-height: none;
+}
+
+/* ===== Tables ===== */
+.slide table {
+    border-collapse: collapse;
+    margin-bottom: 0.8em;
+    font-size: 0.85em;
+    width: 100%;
+}
+
+.slide th, .slide td {
+    border: 1px solid var(--colloquium-border);
+    padding: 0.4em 0.7em;
+    text-align: left;
+}
+
+.slide th {
+    background: var(--colloquium-code-bg);
+    font-weight: 600;
+}
+
+/* ===== Blockquotes ===== */
+.slide blockquote {
+    border-left: 4px solid var(--colloquium-accent);
+    padding-left: 1em;
+    margin-bottom: 0.8em;
+    color: var(--colloquium-muted);
+    font-style: italic;
+}
+
+/* ===== Horizontal Rule ===== */
+.slide hr {
+    border: none;
+    border-top: 2px solid var(--colloquium-border);
+    margin: 1em 0;
+}
+
+/* ===== Math (KaTeX) ===== */
+.slide .katex-display {
+    margin: 0.8em 0;
+    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    width: 100%;
+    touch-action: pan-y;
+    overscroll-behavior-x: none;
+}
+
+.slide .katex-display .katex {
+    max-width: 100%;
+    pointer-events: none;
+}
+
+.slide .katex-display::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* ===== Layout: Title Slide ===== */
+.slide--title {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.slide--title.active {
+    display: flex;
+}
+
+.slide--title h1 {
+    font-size: 2.8em;
+    margin-bottom: 0.3em;
+}
+
+.slide--title .slide-content {
+    flex: 0 0 auto;
+}
+
+.slide--title .slide-content p {
+    font-size: 1.1em;
+    color: var(--colloquium-muted);
+}
+
+/* Shared title-slide components */
+.colloquium-title-eyebrow {
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--colloquium-accent);
+    margin-bottom: 1.1em;
+}
+
+.colloquium-title-rule {
+    width: 84px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--colloquium-accent);
+    margin-bottom: 1.4em;
+}
+
+.colloquium-title-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+}
+
+.colloquium-title-meta p {
+    margin: 0;
+    color: var(--colloquium-muted);
+}
+
+.colloquium-title-name {
+    font-size: 1.55em;
+    font-weight: 500;
+    color: var(--colloquium-heading);
+}
+
+.colloquium-title-note {
+    font-size: 0.9em;
+    line-height: 1.45;
+    color: var(--colloquium-muted);
+    max-width: 26em;
+}
+
+/* ===== Layout: Title Left ===== */
+.slide--title-left {
+    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    padding: 72px 84px 60px;
+}
+
+.slide--title-left.active {
+    display: flex;
+}
+
+.slide--title-left h1 {
+    max-width: 980px;
+    font-size: 3em;
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+    margin-bottom: 0.95em;
+}
+
+.slide--title-left .slide-content {
+    flex: 0 0 auto;
+    max-width: 560px;
+}
+
+.slide--title-left .slide-content > * + * {
+    margin-top: 1em;
+}
+
+/* ===== Layout: Title Sidebar ===== */
+.slide--title-sidebar {
+    padding: 72px 84px 60px;
+}
+
+.slide--title-sidebar.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    column-gap: 56px;
+    align-content: center;
+    align-items: start;
+}
+
+.slide--title-sidebar h1 {
+    grid-column: 1;
+    align-self: start;
+    max-width: 760px;
+    font-size: 2.9em;
+    line-height: 1.03;
+    letter-spacing: -0.045em;
+    text-align: left;
+    margin: 0;
+}
+
+.slide--title-sidebar .slide-content {
+    grid-column: 2;
+    align-self: start;
+    position: relative;
+    padding: 0 0 24px 28px;
+}
+
+.slide--title-sidebar .slide-content::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 24px;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--colloquium-accent);
+}
+
+.slide--title-sidebar .slide-content > * + * {
+    margin-top: 1em;
+}
+
+.slide--title-sidebar.title-sidebar-rule-full .slide-content {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.slide--title-sidebar.title-sidebar-rule-full .slide-content::before {
+    bottom: 0;
+}
+
+/* Title-sidebar uses grid, so vertical positioning maps to align-content. */
+.slide--title-sidebar.valign-top.active {
+    align-content: start;
+}
+
+.slide--title-sidebar.valign-center.active {
+    align-content: center;
+}
+
+.slide--title-sidebar.valign-bottom.active {
+    align-content: end;
+}
+
+/* ===== Layout: Title Banner ===== */
+.slide--title-banner {
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+    padding: 72px 84px 60px;
+}
+
+.slide--title-banner.active {
+    display: flex;
+}
+
+.slide--title-banner h1 {
+    max-width: 980px;
+    font-size: 3em;
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+    margin-bottom: 0.45em;
+}
+
+.slide--title-banner .slide-content {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    max-width: 620px;
+}
+
+.slide--title-banner .slide-content > * + * {
+    margin-top: 1em;
+}
+
+/* ===== Layout: Section Break ===== */
+.slide--section-break {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: var(--colloquium-accent);
+    color: #ffffff;
+}
+
+.slide--section-break.active {
+    display: flex;
+}
+
+.slide--section-break h2 {
+    color: #ffffff;
+    font-size: 2.2em;
+}
+
+.slide--section-break .slide-content {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* ===== Layout: Two Column ===== */
+.slide--two-column .slide-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2em;
+    align-items: start;
+    width: 100%;
+}
+
+/* ===== Layout: Image Left ===== */
+.slide--image-left .slide-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2em;
+    align-items: center;
+    width: 100%;
+}
+
+.slide--image-left .slide-content img {
+    max-height: 500px;
+}
+
+/* ===== Layout: Image Right ===== */
+.slide--image-right .slide-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2em;
+    align-items: center;
+    width: 100%;
+}
+
+.slide--image-right .slide-content img {
+    max-height: 500px;
+    order: 2;
+}
+
+/* ===== Layout: Code ===== */
+.slide--code pre {
+    font-size: 0.7em;
+    max-height: 500px;
+}
+
+/* ===== Utility: Title Position ===== */
+.title-top.active { justify-content: flex-start; }
+.title-center.active { justify-content: center; }
+.title-center.active > h1, .title-center.active > h2 { text-align: center; }
+.title-hidden h1, .title-hidden h2 { display: none; }
+
+/* ===== Utility: Text Alignment ===== */
+.align-left.active { text-align: left; }
+.align-center.active { text-align: center; }
+.align-right.active { text-align: right; }
+
+.align-center.active .slide-content > img,
+.align-center.active .slide-content > p > img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.align-left.active .slide-content > img,
+.align-left.active .slide-content > p > img {
+    display: block;
+    margin-right: auto;
+}
+
+.align-right.active .slide-content > img,
+.align-right.active .slide-content > p > img {
+    display: block;
+    margin-left: auto;
+}
+
+/* ===== Utility: Vertical Alignment ===== */
+/* ===== Utility: Tall right figure =====
+   Opt-in slide class (<!-- class: img-tall-right -->) for columns slides:
+   the slide becomes the column grid itself, using the tracks the columns
+   directive emits as --colloquium-columns, so the figure column follows
+   the chosen ratio (40/60, 60/40, 1/2/1, ...). The eyebrow, title, and the
+   other columns stack in the left tracks; the last column spans from the
+   top of the slide to the bottom of the content area, so a captioned figure
+   or an image followed by its caption runs the full height with the caption
+   directly beneath. */
+.slide.img-tall-right.active {
+    display: grid;
+}
+.slide.img-tall-right {
+    grid-template-columns: var(--colloquium-columns, minmax(0, 1fr) minmax(0, 1fr));
+    grid-template-rows: auto auto minmax(0, 1fr);
+    column-gap: 2em;
+    align-content: start;
+}
+.slide.img-tall-right > .slide-eyebrow {
+    grid-column: 1 / -2;
+    grid-row: 1;
+}
+.slide.img-tall-right > h1,
+.slide.img-tall-right > h2 {
+    grid-column: 1 / -2;
+    grid-row: 2;
+}
+.slide.img-tall-right > .slide-content.colloquium-grid { display: contents; }
+.slide.img-tall-right > .slide-content.colloquium-grid > .col {
+    grid-row: 3;
+    min-height: 0;
+}
+.slide.img-tall-right > .slide-content.colloquium-grid > .col:last-child {
+    grid-column: -2 / -1;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 0;
+}
+
+.valign-top.active { justify-content: flex-start; }
+.valign-center.active { justify-content: center; }
+.valign-bottom.active { justify-content: flex-end; }
+
+/* ===== Utility: Columns ===== */
+.colloquium-grid {
+    display: grid;
+    gap: 2em;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* ===== Utility: Rows ===== */
+.colloquium-rows {
+    display: grid;
+    gap: 0.9em;
+    width: 100%;
+    min-height: 0;
+    flex: 1;
+}
+
+.colloquium-row {
+    min-height: 0;
+}
+
+/* Images in grid layouts: fit within the available content height */
+.colloquium-grid img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: calc(720px - var(--colloquium-slide-padding) * 2 - 100px);
+    object-fit: contain;
+}
+
+.colloquium-rows img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.colloquium-grid > .col,
+.colloquium-rows > .colloquium-row {
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.slide .slide-content:has(> figure.colloquium-figure:first-child:last-child),
+.slide .colloquium-grid > .col:has(> figure.colloquium-figure:first-child:last-child),
+.slide .colloquium-row:has(> figure.colloquium-figure:first-child:last-child) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.colloquium-grid > .col > :last-child,
+.colloquium-rows > .colloquium-row > :last-child {
+    margin-bottom: 0;
+}
+
+/* Standalone images inside grid cells should fit the cell by default. */
+.slide .colloquium-grid > .col > p:first-child:last-child:has(> img),
+.slide .colloquium-row > p:first-child:last-child:has(> img) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.slide.img-valign-top .colloquium-grid > .col > p:first-child:last-child:has(> img),
+.slide.img-valign-top .colloquium-row > p:first-child:last-child:has(> img) {
+    align-items: flex-start;
+}
+
+.slide.img-valign-center .colloquium-grid > .col > p:first-child:last-child:has(> img),
+.slide.img-valign-center .colloquium-row > p:first-child:last-child:has(> img) {
+    align-items: center;
+}
+
+.slide.img-valign-bottom .colloquium-grid > .col > p:first-child:last-child:has(> img),
+.slide.img-valign-bottom .colloquium-row > p:first-child:last-child:has(> img) {
+    align-items: flex-end;
+}
+
+.slide.img-valign-center .slide-content:has(> figure.colloquium-figure:first-child:last-child),
+.slide.img-valign-center .colloquium-grid > .col:has(> figure.colloquium-figure:first-child:last-child),
+.slide.img-valign-center .colloquium-row:has(> figure.colloquium-figure:first-child:last-child) {
+    justify-content: center;
+}
+
+.slide.img-valign-bottom .slide-content:has(> figure.colloquium-figure:first-child:last-child),
+.slide.img-valign-bottom .colloquium-grid > .col:has(> figure.colloquium-figure:first-child:last-child),
+.slide.img-valign-bottom .colloquium-row:has(> figure.colloquium-figure:first-child:last-child) {
+    justify-content: flex-end;
+}
+
+.slide .slide-content > figure.colloquium-figure:first-child:last-child,
+.slide .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child,
+.slide .colloquium-row > figure.colloquium-figure:first-child:last-child {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: auto;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+}
+
+.slide .colloquium-grid > .col > p:first-child:last-child:has(> img) > img,
+.slide .colloquium-row > p:first-child:last-child:has(> img) > img {
+    width: 100%;
+    height: 100%;
+    flex: 1 1 auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: top center;
+    min-height: 0;
+}
+
+.slide .slide-content > figure.colloquium-figure:first-child:last-child > img,
+.slide .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child > img,
+.slide .colloquium-row > figure.colloquium-figure:first-child:last-child > img {
+    width: auto;
+    height: auto;
+    flex: 0 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: top center;
+    min-height: 0;
+}
+
+.slide.img-valign-top .colloquium-grid > .col > p:first-child:last-child:has(> img) > img,
+.slide.img-valign-top .colloquium-row > p:first-child:last-child:has(> img) > img,
+.slide.img-valign-top .slide-content > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-valign-top .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-valign-top .colloquium-row > figure.colloquium-figure:first-child:last-child > img {
+    object-position: top center;
+}
+
+.slide.img-valign-center .colloquium-grid > .col > p:first-child:last-child:has(> img) > img,
+.slide.img-valign-center .colloquium-row > p:first-child:last-child:has(> img) > img,
+.slide.img-valign-center .slide-content > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-valign-center .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-valign-center .colloquium-row > figure.colloquium-figure:first-child:last-child > img {
+    object-position: center center;
+}
+
+.slide.img-valign-bottom .colloquium-grid > .col > p:first-child:last-child:has(> img) > img,
+.slide.img-valign-bottom .colloquium-row > p:first-child:last-child:has(> img) > img,
+.slide.img-valign-bottom .slide-content > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-valign-bottom .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-valign-bottom .colloquium-row > figure.colloquium-figure:first-child:last-child > img {
+    object-position: bottom center;
+}
+
+/* ===== Figure columns =====
+   A grid column or row cell whose first child is an image (a bare <img>, or
+   a paragraph holding only an image) followed by nothing but paragraphs
+   (its caption or source line) lays out as a flex column: the image shrinks
+   to the height left beside the caption, the caption stays directly beneath
+   it, and the column keeps the width given by the columns directive. No
+   class is needed; captioned <figure> elements have their own rules above.
+   :has() cannot nest, so the bare-image and wrapped-image cases are
+   separate selectors. The structural conditions sit in :where(), so the
+   container, image, and caption rules have zero specificity and any deck
+   CSS overrides them. The one exception is max-height: the theme's own
+   `.slide .slide-content img` (0,2,1) caps image height, so a rule at
+   exactly that specificity lifts the cap to the column height; it carries
+   nothing else. */
+:where(.slide .colloquium-grid > .col:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide .colloquium-row:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide .colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide .colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 0;
+}
+
+:where(.slide .colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:first-child),
+:where(.slide .colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:first-child) {
+    display: contents;
+}
+
+:where(.slide .colloquium-grid > .col:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > img:first-child),
+:where(.slide .colloquium-row:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > img:first-child),
+:where(.slide .colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:first-child > img),
+:where(.slide .colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:first-child > img) {
+    display: block;
+    flex: 0 1 auto;
+    min-height: 0;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    margin: 0;
+    object-fit: contain;
+}
+
+.slide .slide-content :where(.colloquium-grid > .col:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) > img:first-child,
+.slide .slide-content :where(.colloquium-row:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) > img:first-child,
+.slide .slide-content :where(.colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) > p:first-child > img,
+.slide .slide-content :where(.colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) > p:first-child > img {
+    max-height: 100%;
+}
+
+:where(.slide .colloquium-grid > .col:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:not(:first-child)),
+:where(.slide .colloquium-row:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:not(:first-child)),
+:where(.slide .colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:not(:first-child)),
+:where(.slide .colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p))) > p:not(:first-child)) {
+    flex: 0 0 auto;
+    max-width: 100%;
+    margin: 0.45em 0 0;
+}
+
+:where(.slide.img-valign-center .colloquium-grid > .col:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide.img-valign-center .colloquium-row:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide.img-valign-center .colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide.img-valign-center .colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) {
+    justify-content: center;
+}
+
+:where(.slide.img-valign-bottom .colloquium-grid > .col:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide.img-valign-bottom .colloquium-row:has(> img:first-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide.img-valign-bottom .colloquium-grid > .col:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))),
+:where(.slide.img-valign-bottom .colloquium-row:has(> p:first-child > img:only-child):has(> p:not(:first-child)):not(:has(> :not(:first-child):not(p)))) {
+    justify-content: flex-end;
+}
+
+.img-overflow .colloquium-grid > .col,
+.img-overflow .colloquium-rows > .colloquium-row,
+.img-overflow .slide-content {
+    overflow: visible;
+}
+
+.slide.img-overflow .colloquium-grid > .col > p:first-child:last-child:has(> img),
+.slide.img-overflow .colloquium-row > p:first-child:last-child:has(> img),
+.slide.img-overflow .slide-content > figure.colloquium-figure:first-child:last-child,
+.slide.img-overflow .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child,
+.slide.img-overflow .colloquium-row > figure.colloquium-figure:first-child:last-child {
+    overflow: visible;
+}
+
+.slide.img-overflow .colloquium-grid > .col > p:first-child:last-child:has(> img) > img,
+.slide.img-overflow .colloquium-row > p:first-child:last-child:has(> img) > img,
+.slide.img-overflow .slide-content > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-overflow .colloquium-grid > .col > figure.colloquium-figure:first-child:last-child > img,
+.slide.img-overflow .colloquium-row > figure.colloquium-figure:first-child:last-child > img {
+    width: auto;
+    height: auto;
+    flex: 0 0 auto;
+    max-width: none;
+    max-height: none;
+}
+
+/* ===== Utility: Image Alignment (independent of title) ===== */
+.img-align-center .slide-content img,
+.img-align-left .slide-content img,
+.img-align-right .slide-content img {
+    display: block;
+}
+
+.img-align-center .slide-content img { margin-left: auto; margin-right: auto; }
+.img-align-left .slide-content img { margin-right: auto; }
+.img-align-right .slide-content img { margin-left: auto; }
+
+/* ===== Utility: Image Fill ===== */
+.img-fill .slide-content img {
+    max-height: none;
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.img-fill .slide-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+}
+
+/* ===== Utility: Padding ===== */
+.pad-compact.active { padding: 30px; }
+.pad-normal.active  { padding: 60px; }
+.pad-wide.active    { padding: 90px; }
+
+/* ===== Utility: Font Size (slide-level) ===== */
+.size-small.active  { font-size: calc(var(--colloquium-font-size) * 0.8333 * var(--colloquium-font-scale)); }
+.size-normal.active { font-size: calc(var(--colloquium-font-size) * var(--colloquium-font-scale)); }
+.size-large.active  { font-size: calc(var(--colloquium-font-size) * 1.1667 * var(--colloquium-font-scale)); }
+
+/* ===== Utility: Inline/Block Text Size ===== */
+.text-xs { font-size: 0.65em; }
+.text-sm { font-size: 0.8em; }
+.text-base { font-size: 1em; }
+.text-lg { font-size: 1.2em; }
+.text-xl { font-size: 1.4em; }
+.text-2xl { font-size: 1.7em; }
+.text-3xl { font-size: 2.2em; }
+.text-4xl { font-size: 2.8em; }
+
+/* ===== Utility: Spacing ===== */
+.colloquium-spacer-sm { height: 0.75em; }
+.colloquium-spacer-md { height: 1.25em; }
+.colloquium-spacer-lg { height: 2em; }
+
+/* ===== Utility: Footnotes ===== */
+.colloquium-footnote {
+    margin-top: 1em;
+    font-size: 0.68em;
+    line-height: 1.35;
+    color: var(--colloquium-muted);
+}
+
+.colloquium-footnote p {
+    margin: 0.35em 0 0;
+}
+
+.colloquium-footnote p:first-child {
+    margin-top: 0;
+}
+
+/* ===== Fragments (incremental reveal) ===== */
+.fragment[data-fragment-index] {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+.fragment[data-fragment-index].visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== Footer (inside each slide) ===== */
+.colloquium-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 13px;
+    color: var(--colloquium-muted);
+    user-select: none;
+}
+
+.colloquium-footer-left,
+.colloquium-footer-center,
+.colloquium-footer-right {
+    display: flex;
+    align-items: center;
+}
+
+.colloquium-footer-left   { justify-content: flex-start; }
+.colloquium-footer-center { justify-content: center; flex: 1; }
+.colloquium-footer-right  { justify-content: flex-end; }
+
+.colloquium-footer-nav {
+    cursor: pointer;
+}
+
+.slide .colloquium-footer-logo {
+    height: 24px;
+    width: auto;
+    border-radius: 0;
+    max-height: none;
+}
+
+.colloquium-counter {
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.colloquium-counter:hover {
+    opacity: 1;
+}
+
+.colloquium-footer-nav:hover {
+    color: var(--colloquium-accent);
+}
+
+/* Inverted footer on section breaks */
+.slide--section-break .colloquium-footer {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ===== Slide Picker Overlay ===== */
+.colloquium-picker-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 200;
+}
+
+.colloquium-picker-overlay.active {
+    display: block;
+}
+
+.colloquium-picker {
+    position: absolute;
+    bottom: 48px;
+    right: 24px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-height: 70vh;
+    overflow-y: auto;
+    width: 360px;
+    padding: 8px 0;
+}
+
+.colloquium-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    font-family: var(--colloquium-font-body);
+    font-size: 15px;
+    color: var(--colloquium-text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.colloquium-picker-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.colloquium-picker-item:hover {
+    background: var(--colloquium-code-bg);
+}
+
+.colloquium-picker-item.current {
+    color: var(--colloquium-accent);
+    font-weight: 600;
+}
+
+.colloquium-picker-num {
+    min-width: 28px;
+    color: var(--colloquium-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    text-align: right;
+}
+
+.colloquium-picker-item.current .colloquium-picker-num {
+    color: var(--colloquium-accent);
+}
+
+/* Chapters: collapsible groups; only the current chapter opens by default */
+.colloquium-picker-chapter + .colloquium-picker-chapter,
+.colloquium-picker-item + .colloquium-picker-chapter {
+    border-top: 1px solid var(--colloquium-border);
+}
+
+.colloquium-picker-chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    font-family: var(--colloquium-font-body);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--colloquium-heading);
+    cursor: pointer;
+    text-align: left;
+}
+
+.colloquium-picker-chapter-header:hover {
+    background: var(--colloquium-code-bg);
+}
+
+.colloquium-picker-chapter-header.current {
+    color: var(--colloquium-accent);
+}
+
+.colloquium-picker-chapter-toggle {
+    min-width: 28px;
+    text-align: right;
+    color: var(--colloquium-muted);
+}
+
+.colloquium-picker-chapter-toggle::before {
+    content: "\25B8";
+    display: inline-block;
+    transition: transform 0.15s;
+}
+
+.colloquium-picker-chapter.expanded .colloquium-picker-chapter-toggle::before {
+    transform: rotate(90deg);
+}
+
+.colloquium-picker-chapter-range {
+    color: var(--colloquium-muted);
+    font-size: 13px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+
+.colloquium-picker-chapter-slides {
+    display: none;
+    padding-bottom: 4px;
+}
+
+.colloquium-picker-chapter.expanded .colloquium-picker-chapter-slides {
+    display: block;
+}
+
+.colloquium-picker-chapter-slides .colloquium-picker-item {
+    padding-left: 32px;
+}
+
+/* ===== Chapter Bar (frontmatter chapter_bar, <!-- chapter-bar: ... -->) =====
+   One labeled segment per chapter along the slide's bottom edge. Each
+   segment's track fills to --chapter-progress: done chapters are full, the
+   current one fills as its slides advance. The footer and anything pinned
+   above it shift up by --colloquium-chapter-bar-offset, and the content area
+   shrinks by --colloquium-chapter-bar-height. The unlabeled `bars` style only
+   lifts the footer off the tracks; the content area keeps its full height. */
+.slide.has-chapter-bar {
+    --colloquium-chapter-bar-offset: var(--colloquium-chapter-bar-height);
+    padding-bottom: calc(var(--colloquium-slide-padding) + var(--colloquium-chapter-bar-height));
+}
+
+.slide.has-chapter-bar:has(> .colloquium-chapter-bar--bars) {
+    --colloquium-chapter-bar-height: 0px;
+    --colloquium-chapter-bar-offset: 12px;
+}
+
+.slide.has-chapter-bar .colloquium-footer {
+    bottom: var(--colloquium-chapter-bar-offset);
+}
+
+.slide.has-chapter-bar .colloquium-slide-meta,
+.slide.has-chapter-bar .colloquium-overflow-warn {
+    bottom: calc(40px + var(--colloquium-chapter-bar-offset));
+}
+
+.slide.img-tall-right.has-chapter-bar .colloquium-grid > .col:last-child > figure.colloquium-figure:first-child:last-child {
+    bottom: calc(42px + var(--colloquium-chapter-bar-offset));
+}
+
+.colloquium-chapter-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--colloquium-chapter-bar-height);
+    display: flex;
+    gap: 6px;
+    padding: 0 24px 8px;
+    text-align: left;
+    z-index: 3;
+    user-select: none;
+}
+
+.slide a.colloquium-chapter-bar-item {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    font-family: var(--colloquium-font-body);
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--colloquium-muted);
+    border-bottom: none;
+}
+
+.slide a.colloquium-chapter-bar-item::after {
+    content: "";
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+        to right,
+        var(--colloquium-progress-fill) var(--chapter-progress, 0%),
+        var(--colloquium-progress-bg) var(--chapter-progress, 0%)
+    );
+}
+
+.slide a.colloquium-chapter-bar-item.done {
+    color: var(--colloquium-text);
+}
+
+.slide a.colloquium-chapter-bar-item.current {
+    color: var(--colloquium-heading);
+    font-weight: 600;
+}
+
+.slide a.colloquium-chapter-bar-item:hover {
+    color: var(--colloquium-accent);
+}
+
+.colloquium-chapter-bar--bars {
+    height: auto;
+    padding-bottom: 6px;
+}
+
+/* progress: chapters — whole-chapter states: finished tracks are dimmed,
+   the current one is solid with a bold label, upcoming ones stay empty */
+.slide .colloquium-chapter-bar--chapters a.colloquium-chapter-bar-item.done::after {
+    opacity: 0.45;
+}
+
+.slide--section-break .colloquium-chapter-bar--chapters a.colloquium-chapter-bar-item.done::after {
+    opacity: 0.6;
+}
+
+.slide .colloquium-chapter-bar--chapters a.colloquium-chapter-bar-item.upcoming {
+    opacity: 0.7;
+}
+
+/* Keep a usable click target above the thin track */
+.slide .colloquium-chapter-bar--bars a.colloquium-chapter-bar-item {
+    padding-top: 6px;
+}
+
+.colloquium-chapter-bar-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Section breaks sit on the accent color, so the bar switches to white */
+.slide--section-break a.colloquium-chapter-bar-item,
+.slide--section-break a.colloquium-chapter-bar-item.done {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.slide--section-break a.colloquium-chapter-bar-item.current,
+.slide--section-break a.colloquium-chapter-bar-item:hover {
+    color: #ffffff;
+}
+
+.slide--section-break a.colloquium-chapter-bar-item::after {
+    background: linear-gradient(
+        to right,
+        #ffffff var(--chapter-progress, 0%),
+        rgba(255, 255, 255, 0.3) var(--chapter-progress, 0%)
+    );
+}
+
+/* The bar already shows progress, so drop the window-edge progress line */
+.colloquium-has-chapter-bar .colloquium-progress {
+    display: none;
+}
+
+/* ===== Table of Contents (```toc block) ===== */
+.colloquium-toc {
+    margin: 0.4em 0;
+    padding-left: 1.4em;
+}
+
+ul.colloquium-toc {
+    list-style: none;
+    padding-left: 0;
+}
+
+.colloquium-toc-item {
+    margin: 0.35em 0;
+}
+
+.slide .colloquium-toc a {
+    color: inherit;
+    border-bottom: none;
+}
+
+.slide .colloquium-toc a:hover {
+    color: var(--colloquium-accent);
+}
+
+/* Inside a chapter, the TOC acts as an agenda: highlight the current chapter */
+.colloquium-toc--has-current .colloquium-toc-item,
+.colloquium-toc--has-current .colloquium-toc-item::marker {
+    color: var(--colloquium-muted);
+}
+
+.colloquium-toc--has-current .colloquium-toc-item.current,
+.colloquium-toc--has-current .colloquium-toc-item.current::marker {
+    color: var(--colloquium-accent);
+    font-weight: 600;
+}
+
+.slide--section-break .colloquium-toc--has-current .colloquium-toc-item,
+.slide--section-break .colloquium-toc--has-current .colloquium-toc-item::marker {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.slide--section-break .colloquium-toc--has-current .colloquium-toc-item.current,
+.slide--section-break .colloquium-toc--has-current .colloquium-toc-item.current::marker {
+    color: #ffffff;
+}
+
+/* ===== Picker Trigger ===== */
+.colloquium-picker-trigger {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 155;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--colloquium-heading);
+    font-family: var(--colloquium-font-body);
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.colloquium-picker-trigger:hover {
+    background: #fff;
+}
+
+.colloquium-picker-trigger-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--colloquium-muted);
+}
+
+.colloquium-picker-trigger-count {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--colloquium-accent);
+}
+
+body.colloquium-embedded .colloquium-picker-trigger {
+    display: none !important;
+}
+
+/* ===== Present Button ===== */
+.colloquium-present {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 150;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--colloquium-accent);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+body:hover .colloquium-present {
+    opacity: 0.7;
+}
+
+.colloquium-present:hover {
+    opacity: 1 !important;
+}
+
+/* Hide when already fullscreen */
+:fullscreen .colloquium-present {
+    display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .colloquium-present {
+        display: none !important;
+    }
+
+    .colloquium-picker-trigger {
+        display: flex;
+        right: max(12px, env(safe-area-inset-right));
+        bottom: max(12px, env(safe-area-inset-bottom));
+        min-height: 52px;
+        padding: 12px 16px;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+    }
+
+    .colloquium-picker-trigger-label {
+        font-size: 12px;
+    }
+
+    .colloquium-picker-trigger-count {
+        font-size: 16px;
+    }
+
+    .colloquium-picker {
+        right: 12px;
+        left: 12px;
+        bottom: 76px;
+        width: auto;
+        max-height: min(72vh, 560px);
+    }
+}
+
+/* ===== Overflow Warning ===== */
+.colloquium-overflow-warn {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: repeating-linear-gradient(
+        90deg, #e94560 0, #e94560 8px, transparent 8px, transparent 16px
+    );
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+:fullscreen .colloquium-overflow-warn {
+    display: none;
+}
+
+/* ===== Progress Bar ===== */
+.colloquium-progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--colloquium-progress-bg);
+    z-index: 100;
+}
+
+.colloquium-progress-bar {
+    height: 100%;
+    background: var(--colloquium-progress-fill);
+    transition: width 0.3s ease;
+}
+
+/* ===== Conversation Bubbles ===== */
+.colloquium-conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6em;
+    width: 100%;
+}
+
+.colloquium-message {
+    max-width: 80%;
+    border-radius: 12px;
+    padding: 0.5em 0.8em;
+}
+
+.colloquium-message--user {
+    align-self: flex-end;
+    background: var(--colloquium-accent);
+    color: #ffffff;
+}
+
+.colloquium-message--assistant {
+    align-self: flex-start;
+    background: var(--colloquium-code-bg);
+    color: var(--colloquium-text);
+}
+
+.colloquium-message--system {
+    align-self: center;
+    border: 1px solid var(--colloquium-border);
+    background: transparent;
+    color: var(--colloquium-muted);
+    font-style: italic;
+    font-size: 0.85em;
+    max-width: 90%;
+}
+
+.colloquium-message-role {
+    font-size: 0.65em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.15em;
+    opacity: 0.75;
+}
+
+.colloquium-message--user .colloquium-message-role {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.colloquium-message-role-name {
+    display: inline;
+}
+
+.colloquium-message-model {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.colloquium-message-content p {
+    margin: 0 0 0.3em;
+    white-space: pre-line;
+}
+
+.colloquium-message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.colloquium-message-content li {
+    white-space: pre-line;
+}
+
+.colloquium-message-content code {
+    font-size: 0.85em;
+}
+
+.colloquium-message--user .colloquium-message-content code {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== Built With Badge ===== */
+.slide a.colloquium-builtwith {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75em;
+    max-width: 100%;
+    padding: 0.55em 0.8em;
+    border: 1px solid color-mix(in srgb, var(--colloquium-border) 75%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--colloquium-code-bg) 75%, white 25%);
+    color: var(--colloquium-text);
+    text-decoration: none;
+    line-height: 1.1;
+}
+
+.slide a.colloquium-builtwith:hover {
+    border-color: color-mix(in srgb, var(--colloquium-accent) 55%, var(--colloquium-border) 45%);
+    color: var(--colloquium-heading);
+}
+
+.colloquium-builtwith-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15em;
+    height: 1.15em;
+    flex: 0 0 auto;
+}
+
+.colloquium-builtwith-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.colloquium-builtwith-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05em;
+}
+
+.colloquium-builtwith-label {
+    font-size: 0.6em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--colloquium-muted);
+}
+
+.colloquium-builtwith-repo {
+    font-size: 0.82em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.colloquium-builtwith-stars {
+    font-size: 0.72em;
+    color: var(--colloquium-muted);
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+/* ===== Citations ===== */
+.slide a.colloquium-cite {
+    color: var(--colloquium-accent);
+    text-decoration: none;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.slide a.colloquium-cite:hover {
+    text-decoration: underline;
+}
+
+.colloquium-footnote-ref {
+    font-size: 0.65em;
+    line-height: 0;
+    vertical-align: super;
+}
+
+.slide .colloquium-footnote-ref a {
+    color: var(--colloquium-accent);
+    text-decoration: none;
+}
+
+.slide .colloquium-footnote-ref a:hover {
+    text-decoration: underline;
+}
+
+.colloquium-cite-missing {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* ===== Per-Slide Footnote Area ===== */
+.colloquium-slide-meta {
+    position: absolute;
+    bottom: 40px;
+    font-size: 12px;
+    color: var(--colloquium-muted);
+    max-width: 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+    z-index: 4;
+}
+
+.colloquium-slide-meta--left {
+    left: 24px;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.colloquium-slide-meta--right {
+    right: 24px;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.colloquium-slide-cite,
+.colloquium-slide-footnote {
+    max-width: 100%;
+}
+
+.colloquium-slide-cite {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.colloquium-slide-cite a.colloquium-cite {
+    font-size: inherit;
+    color: var(--colloquium-accent);
+}
+
+.colloquium-slide-cite a.colloquium-cite:hover {
+    color: var(--colloquium-heading);
+}
+
+.colloquium-slide-footnote {
+    line-height: 1.35;
+}
+
+.colloquium-slide-footnote-item + .colloquium-slide-footnote-item {
+    margin-top: 0.15em;
+}
+
+.colloquium-slide-footnote-label {
+    font-weight: 600;
+}
+
+.colloquium-slide-footnote-text {
+    display: inline;
+}
+
+.colloquium-slide-footnote-text .colloquium-cite {
+    white-space: normal;
+}
+
+.colloquium-slide-footnote > :first-child {
+    margin-top: 0;
+}
+
+.colloquium-slide-footnote > :last-child {
+    margin-bottom: 0;
+}
+
+.colloquium-slide-meta--right .colloquium-slide-footnote ul,
+.colloquium-slide-meta--right .colloquium-slide-footnote ol {
+    padding-right: 1.2em;
+    padding-left: 0;
+    list-style-position: inside;
+}
+
+/* ===== References Slide ===== */
+.colloquium-references-slide {
+}
+
+.colloquium-reference {
+    padding-left: 2em;
+    text-indent: -2em;
+    margin-bottom: 0.6em;
+    font-size: 0.75em;
+    line-height: 1.5;
+}
+
+.colloquium-ref-url {
+    color: var(--colloquium-muted);
+    font-size: 0.9em;
+    text-decoration: none;
+}
+
+.colloquium-ref-url:hover {
+    color: var(--colloquium-accent);
+    text-decoration: underline;
+}
+
+/* ===== Print / PDF Styles ===== */
+@page {
+    size: 13.333in 7.5in;  /* 16:9 widescreen at 96 CSS px/in => 1280x720 */
+    margin: 0;
+}
+
+@media print {
+    /* The live presenter scale never applies to printed/exported output */
+    :root { --colloquium-font-scale: 1 !important; }
+
+    html, body {
+        width: 13.333in;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+    }
+
+    .colloquium-deck {
+        position: static;
+        transform: none !important;
+        width: auto;
+        height: auto;
+        background: none;
+    }
+
+    .slide {
+        display: flex !important;
+        position: relative;
+        width: 1280px;
+        height: 720px;
+        page-break-after: always;
+        page-break-inside: avoid;
+        break-after: page;
+        break-inside: avoid;
+        margin: 0;
+        font-size: var(--colloquium-font-size);
+        overflow: visible;
+    }
+
+    .slide:last-child {
+        page-break-after: auto;
+    }
+
+    /* Display equations can be clipped inside printed columns even when the
+       right side of the slide has free space available. */
+    .slide .katex-display {
+        overflow: visible !important;
+    }
+
+    /* Hidden slides never get the runtime figure fit pass, so printed grid
+       figures need an explicit container-sized fallback. (Row figures are
+       excluded: they get the row-fraction cap below instead. img-overflow
+       slides opted into a deliberate bleed, so no print cap applies.) */
+    .slide:not(.img-overflow) .slide-content > figure.colloquium-figure:first-child:last-child,
+    .slide:not(.img-overflow) .slide-content.colloquium-grid > .col > figure.colloquium-figure:first-child:last-child {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .slide:not(.img-overflow) .slide-content > figure.colloquium-figure:first-child:last-child > img,
+    .slide:not(.img-overflow) .slide-content.colloquium-grid > .col > figure.colloquium-figure:first-child:last-child > img {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: calc(720px - var(--colloquium-slide-padding) * 2 - 100px) !important;
+    }
+
+    /* Row images: cap to the row's height share of the slide. On screen the
+       runtime fit pass sizes these, but printed slides never run it, and an
+       image taller than its row overflows the fixed-height slide -- Chromium's
+       print fragmentation then silently moves the whole image onto the next
+       PDF page. --colloquium-print-row-frac is emitted on each row at build
+       time; 96px approximates the title block. */
+    .slide:not(.img-overflow) .colloquium-row img {
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: calc(
+            (720px - var(--colloquium-slide-padding) * 2 - 96px)
+            * var(--colloquium-print-row-frac, 1)
+        ) !important;
+    }
+
+    /* Leave room for the caption under captioned row figures. */
+    .slide:not(.img-overflow) .colloquium-row figure.colloquium-figure:has(> figcaption) > img {
+        max-height: calc(
+            (720px - var(--colloquium-slide-padding) * 2 - 96px)
+            * var(--colloquium-print-row-frac, 1) - 48px
+        ) !important;
+    }
+
+    /* Printed slides are not .active, so re-apply layout/utility rules without that gate. */
+    .slide--title,
+    .slide--title-left,
+    .slide--title-banner,
+    .slide--section-break {
+        display: flex !important;
+    }
+
+    .slide--title-sidebar {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        column-gap: 56px;
+        align-content: center;
+        align-items: start;
+    }
+
+    .slide--title-sidebar.valign-top {
+        align-content: start;
+    }
+
+    .slide--title-sidebar.valign-center {
+        align-content: center;
+    }
+
+    .slide--title-sidebar.valign-bottom {
+        align-content: end;
+    }
+
+    .title-top { justify-content: flex-start; }
+    .title-center { justify-content: center; }
+    .title-center > h1, .title-center > h2 { text-align: center; }
+
+    .align-left { text-align: left; }
+    .align-center { text-align: center; }
+    .align-right { text-align: right; }
+
+    .align-center .slide-content > img,
+    .align-center .slide-content > p > img {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .align-left .slide-content > img,
+    .align-left .slide-content > p > img {
+        display: block;
+        margin-right: auto;
+    }
+
+    .align-right .slide-content > img,
+    .align-right .slide-content > p > img {
+        display: block;
+        margin-left: auto;
+    }
+
+    .valign-top { justify-content: flex-start; }
+    .valign-center { justify-content: center; }
+    .valign-bottom { justify-content: flex-end; }
+
+    .size-small { font-size: calc(var(--colloquium-font-size) * 0.8333); }
+    .size-normal { font-size: var(--colloquium-font-size); }
+    .size-large { font-size: calc(var(--colloquium-font-size) * 1.1667); }
+
+    /* img-tall-right: printed slides are forced to flex above, so restore
+       the slide-level grid that places the last column at full height. */
+    .slide.img-tall-right { display: grid !important; }
+    /* Its last column spans beside the title, so the figure may use the full
+       content height instead of the generic grid-figure print cap. */
+    .slide.img-tall-right:not(.img-overflow) .slide-content.colloquium-grid > .col:last-child > figure.colloquium-figure:first-child:last-child > img {
+        max-height: calc(720px - var(--colloquium-slide-padding) * 2 - 48px) !important;
+    }
+
+    .colloquium-progress,
+    .colloquium-picker-overlay,
+    .colloquium-present,
+    .colloquium-picker-trigger,
+    .colloquium-overflow-warn {
+        display: none !important;
+    }
+
+    .colloquium-counter {
+        cursor: default;
+    }
+
+    a {
+        color: inherit !important;
+        text-decoration: underline;
+    }
+
+    /* Content links keep their screen color in print so readers can see
+       which text is a URL; chrome/footer links stay muted via inherit. */
+    .slide a {
+        color: var(--colloquium-link) !important;
+    }
+
+    /* Never ask Chromium to snapshot a remote frame into the PDF. Depending on
+       the site's headers and load timing, that produces a blank or partial
+       frame. Preserve the live iframe in HTML and print a stable linked card. */
+    .colloquium-iframe {
+        display: none !important;
+    }
+
+    .colloquium-iframe-print-snapshot {
+        display: block !important;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--colloquium-border);
+        border-radius: 6px;
+    }
+
+    /* A captured snapshot supersedes the linked card. */
+    .colloquium-iframe-print-snapshot + .colloquium-iframe-print-fallback {
+        display: none !important;
+    }
+
+    .colloquium-iframe-print-fallback {
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        width: 100%;
+        padding: 1em 1.25em;
+        border: 2px solid var(--colloquium-border);
+        border-left: 8px solid var(--colloquium-accent);
+        border-radius: 10px;
+        background: var(--colloquium-bg);
+        text-align: left;
+    }
+
+    /* The live iframe reserves layout height on screen; in print the compact
+       card replaces it, so drop the container's reserved min-height too. */
+    .colloquium-iframe-container {
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    .colloquium-iframe-print-title {
+        margin-bottom: 0.55em;
+        color: var(--colloquium-heading);
+        font-family: var(--colloquium-font-heading);
+        font-size: 1.15em;
+        line-height: 1.25;
+    }
+
+    .slide a.colloquium-iframe-print-link {
+        color: var(--colloquium-link) !important;
+        font-size: 0.8em;
+        overflow-wrap: anywhere;
+    }
+
+    .slide a.colloquium-cite,
+    .colloquium-slide-cite a.colloquium-cite,
+    .slide a.colloquium-ref-url {
+        color: var(--colloquium-accent) !important;
+    }
+
+    /* Swap chart canvases for static images */
+    .colloquium-chart-container canvas {
+        display: none !important;
+    }
+
+    .colloquium-chart-print {
+        display: block !important;
+    }
+
+    /* Show all fragments in print */
+    .fragment[data-fragment-index] {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transition: none !important;
+    }
+}
+
+/* ===== Toast (transient confirmation, e.g. "Copied slide markdown") ===== */
+.colloquium-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    z-index: 1000;
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: rgba(20, 20, 20, 0.92);
+    color: #fff;
+    font-size: 14px;
+    font-family: var(--colloquium-font-body, sans-serif);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.colloquium-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ===== Capture mode — hide UI chrome for headless screenshots ===== */
+.colloquium-capture .colloquium-present,
+.colloquium-capture .colloquium-progress,
+.colloquium-capture .colloquium-overflow-warn,
+.colloquium-capture .colloquium-picker-trigger,
+.colloquium-capture .colloquium-picker-overlay,
+.colloquium-capture .colloquium-toast {
+    display: none !important;
+}
+
+/* Show all fragments in capture mode */
+.colloquium-capture .fragment[data-fragment-index] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: none !important;
+}
+
+/* ===== Presenter tools: magnifier and live text scale ===== */
+.colloquium-deck.colloquium-zoom-anim {
+    transition: transform 0.35s ease;
+}
+
+body.colloquium-zoomed {
+    cursor: zoom-out;
+}
+
+.colloquium-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 48px;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(20, 24, 33, 0.88);
+    color: #fff;
+    font: 600 15px/1.3 var(--colloquium-font-body);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.colloquium-toast.visible {
+    opacity: 1;
+}
+
+.colloquium-toast .colloquium-toast-warn {
+    color: #ffb4a2;
+    margin-left: 0.6em;
+}
+
+.colloquium-capture .colloquium-toast {
+    display: none;
+}
+
+@media print {
+    .colloquium-toast { display: none !important; }
+}
+
+:root {
+    --colloquium-font-heading: "Rubik", sans-serif;
+    --colloquium-font-body: "Source Sans 3", sans-serif;
+}
+:root {
+  --colloquium-font-size: 30px;
+  --colloquium-code-size: 0.75em;
+  --colloquium-accent: #67af71;
+  --colloquium-heading: #67af71;
+  --colloquium-link: #c8553d;
+  --colloquium-code-bg: #f6f3ec;
+  --colloquium-progress-fill: #c8553d;
+}
+.slide .slide-content img { max-height: 360px; width: auto; margin-inline: auto; }
+.slide--section-break h2 { color: #fff; }
+</style>
+</head>
+<body>
+<div class="colloquium-deck">
+<section class="slide slide--title active" data-index="0" data-colloquium-md="PCEtLSBsYXlvdXQ6IHRpdGxlIC0tPgoKIyBUZW1hIDguIEdlc3Rpw7NuIGRlbCBlc3RhZG8gZW4gZnJhbWV3b3JrcyBKUwoKbyBjw7NtbyBkZWphciBkZSBhcnJlZ2xhciBsYXMgY29zYXMgcmVpbmljaWFuZG8=">
+<h1>Tema 8. Gestión del estado en frameworks JS</h1>
+<div class="slide-content"><p>o cómo dejar de arreglar las cosas reiniciando</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">1 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="1" data-colloquium-md="IyMgSG95CgpgYGB0b2MKYGBg">
+<h2>Hoy</h2>
+<div class="slide-content"><ol class="colloquium-toc"><li class="colloquium-toc-item upcoming"><a href="#5">Qué es el estado</a></li><li class="colloquium-toc-item upcoming"><a href="#10">Estado en el árbol</a></li><li class="colloquium-toc-item upcoming"><a href="#20">Estado global de cliente</a></li><li class="colloquium-toc-item upcoming"><a href="#32">Estado del servidor</a></li><li class="colloquium-toc-item upcoming"><a href="#42">En resumen</a></li></ol>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">2 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="2" data-colloquium-md="IyMgKkJ1Z3MqIHF1ZSBzZWd1cm8gaGFiw6lpcyB2aXN0bwoKLSBMYSBjYWJlY2VyYSBkaWNlICoqIjMgcGVuZGllbnRlcyIqKiB5IGxhIGxpc3RhIG11ZXN0cmEgMgotIE1hcmNhcyB1biBpdGVtIGNvbW8gY29tcHJhZG8sIHJlY2FyZ2Fz4oCmIHkgdnVlbHZlIGEgZXN0YXIgc2luIGNvbXByYXIKLSBEb3MgcGVzdGHDsWFzIGFiaWVydGFzLCBkb3MgdmVyc2lvbmVzIGRpc3RpbnRhcyBkZWwgbWlzbW8gbGlzdGFkbwoKPGRpdiBjbGFzcz0iY29sbG9xdWl1bS1zcGFjZXItbWQiPjwvZGl2PgoKYGBgYm94CnRpdGxlOiBTaWVtcHJlIGVzIGVsIG1pc21vIHByb2JsZW1hCnRvbmU6IGFjY2VudApjb250ZW50OiBEb3MgY29waWFzIGRlbCBtaXNtbyBkYXRvIHF1ZSBzZSBoYW4gZGVzaW5jcm9uaXphZG8KYGBg">
+<h2><em>Bugs</em> que seguro habéis visto</h2>
+<div class="slide-content"><ul>
+<li>La cabecera dice <strong>“3 pendientes”</strong> y la lista muestra 2</li>
+<li>Marcas un item como comprado, recargas… y vuelve a estar sin comprar</li>
+<li>Dos pestañas abiertas, dos versiones distintas del mismo listado</li>
+</ul>
+<div class="colloquium-spacer-md"></div>
+<div class="colloquium-box colloquium-box--accent">
+<div class="colloquium-box-title">Siempre es el mismo problema</div>
+<div class="colloquium-box-content"><p>Dos copias del mismo dato que se han desincronizado</p></div>
+</div>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">3 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content align-center valign-center" data-index="3" data-colloquium-md="PCEtLSBjbGFzczogYWxpZ24tY2VudGVyIHZhbGlnbi1jZW50ZXIgLS0+CgojIyAKCjxzcGFuIGNsYXNzPSJ0ZXh0LTJ4bCI+IjgwJSBvZiBhbGwgcHJvYmxlbXMgaW4gYWxsIGNvbXBsZXggc3lzdGVtcyBhcmUgZml4ZWQgYnkgcmVib290aW5nLiI8L3NwYW4+CgpTdHVhcnQgSGFsbG93YXksIFtqdW5pbyAyMDE5XShodHRwczovL3R3aXR0ZXIuY29tL3N0dWFydGhhbGxvd2F5L3N0YXR1cy8xMTM0ODA2MDA4NTI4ODA5OTg1KQoKPGRpdiBjbGFzcz0iY29sbG9xdWl1bS1zcGFjZXItbWQiPjwvZGl2PgoKUmVpbmljaWFyID0gdm9sdmVyIGEgdW4gKiplc3RhZG8qKiBjb25vY2lkbw==">
+<div class="slide-content"><h2></h2>
+<p><span class="text-2xl">“80% of all problems in all complex systems are fixed by rebooting.”</span></p>
+<p>Stuart Halloway, <a href="https://twitter.com/stuarthalloway/status/1134806008528809985">junio 2019</a></p>
+<div class="colloquium-spacer-md"></div>
+<p>Reiniciar = volver a un <strong>estado</strong> conocido</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">4 / 45</span></div></div>
+</section>
+
+<section class="slide slide--section-break valign-center has-chapter-bar" data-index="4" data-chapter="0" data-chapter-start data-chapter-title="Qué es el estado" data-colloquium-md="PCEtLSBsYXlvdXQ6IHNlY3Rpb24tYnJlYWsgLS0+Cgo8IS0tIGNsYXNzOiB2YWxpZ24tY2VudGVyIC0tPgoKPCEtLSBjaGFwdGVyOiBRdcOpIGVzIGVsIGVzdGFkbyAtLT4KCjwhLS0gY2hhcHRlci1zaG9ydDogUXXDqSBlcyAtLT4KCiMjIDguMSDCv1F1w6kgZXMgZWwgZXN0YWRvPw==">
+<h2>8.1 ¿Qué es el estado?</h2>
+<nav class="colloquium-chapter-bar colloquium-chapter-bar--chapters" aria-label="Chapters"><a class="colloquium-chapter-bar-item current" href="#5" title="Qué es el estado" style="--chapter-progress: 100%" aria-current="step"><span class="colloquium-chapter-bar-label">Qué es</span></a><a class="colloquium-chapter-bar-item upcoming" href="#10" title="Estado en el árbol" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">El árbol</span></a><a class="colloquium-chapter-bar-item upcoming" href="#20" title="Estado global de cliente" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">Store</span></a><a class="colloquium-chapter-bar-item upcoming" href="#32" title="Estado del servidor" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">Servidor</span></a><a class="colloquium-chapter-bar-item upcoming" href="#42" title="En resumen" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">En resumen</span></a></nav>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">5 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="5" data-chapter="0" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCiMjIEVsIGVzdGFkbyBkZSB1bmEgYXBwCgo+IEVsIGNvbmp1bnRvIGRlIGRhdG9zICoqbm8gZGVyaXZhYmxlcyoqIHF1ZSBnb2JpZXJuYW4gbG8gcXVlIG11ZXN0cmEgbGEgaW50ZXJmYXoKCi0gRGF0b3MgcXVlIHZpZW5lbiBkZWwgc2Vydmlkb3IKLSBEYXRvcyBpbnRyb2R1Y2lkb3MgcG9yIGVsIHVzdWFyaW8gcGVuZGllbnRlcyBkZSBzaW5jcm9uaXphcgotIEZpbHRyb3MgbG9jYWxlcyAodmVyIHNvbG8gbG9zIGl0ZW1zIHBlbmRpZW50ZXMpCi0gSW5mb3JtYWNpw7NuIGdsb2JhbDogdXN1YXJpbyBhdXRlbnRpY2FkbywgcHJlZmVyZW5jaWFzIGRlIFVJLCBydXRhIGFjdGl2YeKApgoKfHx8Cgo8ZGl2IGNsYXNzPSJjb2xsb3F1aXVtLXNwYWNlci1sZyI+PC9kaXY+CgpgYGBib3gKdGl0bGU6IFVJID0gZihlc3RhZG8pCnRvbmU6IG11dGVkCmNvbnRlbnQ6IHwKICBMYSB2aXN0YSBlcyB1bmEgZnVuY2nDs24gZGVsIGVzdGFkby4KICBFbCBmcmFtZXdvcmsgKHJlYWN0aXZpZGFkKSBzZSBlbmNhcmdhIGRlIHJlY2FsY3VsYXJsYSBjdWFuZG8gZWwgZXN0YWRvIGNhbWJpYS4KICAqKk5vc290cm9zIHNvbG8gZGVjaWRpbW9zIHF1w6kgZXMgZXN0YWRvIHkgZMOzbmRlIHZpdmUuKioKYGBg">
+<h2>El estado de una app</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><blockquote>
+<p>El conjunto de datos <strong>no derivables</strong> que gobiernan lo que muestra la interfaz</p>
+</blockquote>
+<ul>
+<li>Datos que vienen del servidor</li>
+<li>Datos introducidos por el usuario pendientes de sincronizar</li>
+<li>Filtros locales (ver solo los items pendientes)</li>
+<li>Información global: usuario autenticado, preferencias de UI, ruta activa…</li>
+</ul></div><div class="col"><div class="colloquium-spacer-lg"></div>
+<div class="colloquium-box colloquium-box--muted">
+<div class="colloquium-box-title">UI = f(estado)</div>
+<div class="colloquium-box-content"><p>La vista es una función del estado.
+El framework (reactividad) se encarga de recalcularla cuando el estado cambia.
+<strong>Nosotros solo decidimos qué es estado y dónde vive.</strong></p></div>
+</div></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">6 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-2" style="--colloquium-columns: repeat(2, minmax(0, 1fr));" data-index="6" data-chapter="0" data-colloquium-md="PCEtLSBjbGFzczogY29scy0yIC0tPgoKIyMgRXN0YWRvIHZzLiBlc3RhZG8gZGVyaXZhZG8KCuKdjCBHdWFyZGFyIGFsZ28gcXVlIHNlIHB1ZWRlIGNhbGN1bGFyCgpgYGBqYXZhc2NyaXB0CmNvbnN0IGl0ZW1zID0gcmVmKFsuLi5dKQpjb25zdCBwZW5kaWVudGVzID0gcmVmKDApCgpmdW5jdGlvbiB0b2dnbGUoaXRlbSkgewogIGl0ZW0uY29tcHJhZG8gPSAhaXRlbS5jb21wcmFkbwogIC8vIMK/eSBzaSBub3Mgb2x2aWRhbW9zIGRlIGhhY2VyIGVzdG8/CiAgcGVuZGllbnRlcy52YWx1ZSArPSBpdGVtLmNvbXByYWRvID8gLTEgOiAxCn0KYGBgCgp8fHwKCuKchSBDYWxjdWxhcmxvIGEgcGFydGlyIGRlbCBlc3RhZG8KCmBgYGphdmFzY3JpcHQKY29uc3QgaXRlbXMgPSByZWYoWy4uLl0pCgovL25vIHBvZGVtb3Mgb2x2aWRhcm5vcywgc2UgaGFjZSBhdXRvbcOhdGljYW1lbnRlCmNvbnN0IHBlbmRpZW50ZXMgPSBjb21wdXRlZCgoKSA9PgogIGl0ZW1zLnZhbHVlLmZpbHRlcihpID0+ICFpLmNvbXByYWRvKS5sZW5ndGgKKQpgYGAKCjxkaXYgY2xhc3M9ImNvbGxvcXVpdW0tc3BhY2VyLXNtIj48L2Rpdj4KCioqUmVnbGEqKjogc2kgc2UgcHVlZGUgY2FsY3VsYXIsIG5vIGVzIGVzdGFkbyDihpIgYGNvbXB1dGVkYCAodGVtYSBkZSByZWFjdGl2aWRhZCkKCjwhLS0gbm90ZXM6IEVzdGUgZXMgZWwgYnVnIGRlICIzIHBlbmRpZW50ZXMgeSBsYSBsaXN0YSBtdWVzdHJhIDIiLiBMYSBtaXRhZCBkZSBsb3MgcHJvYmxlbWFzIGRlIGVzdGFkbyBzZSBldml0YW4gbm8gZHVwbGljYW5kbyBkYXRvcy4gLS0+">
+<h2>Estado vs. estado derivado</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><div class="col"><p>❌ Guardar algo que se puede calcular</p>
+<pre><code class="language-javascript">const items = ref([...])
+const pendientes = ref(0)
+
+function toggle(item) {
+  item.comprado = !item.comprado
+  // ¿y si nos olvidamos de hacer esto?
+  pendientes.value += item.comprado ? -1 : 1
+}
+</code></pre></div><div class="col"><p>✅ Calcularlo a partir del estado</p>
+<pre><code class="language-javascript">const items = ref([...])
+
+//no podemos olvidarnos, se hace automáticamente
+const pendientes = computed(() =&gt;
+  items.value.filter(i =&gt; !i.comprado).length
+)
+</code></pre>
+<div class="colloquium-spacer-sm"></div>
+<p><strong>Regla</strong>: si se puede calcular, no es estado → <code>computed</code> (tema de reactividad)</p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">7 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-2" style="--colloquium-columns: repeat(2, minmax(0, 1fr));" data-index="7" data-chapter="0" data-colloquium-md="PCEtLSBjbGFzczogY29scy0yIC0tPgoKIyMgRW4gbGEgbGlzdGEgZGUgbGEgY29tcHJhLCDCv2VzIGVzdGFkbz8KCjEuIExhIGxpc3RhIGRlIHByb2R1Y3RvcwoyLiBFbCBuw7ptZXJvIGRlIHByb2R1Y3RvcyBwZW5kaWVudGVzCjMuIEVsIHRleHRvIGRlbCBpbnB1dCAiYcOxYWRpciBwcm9kdWN0byIgbWllbnRyYXMgc2UgZXNjcmliZQo0LiBFbCBmaWx0cm8gInNvbG8gbW9zdHJhciBwZW5kaWVudGVzIiBhY3RpdmFkby9kZXNhY3RpdmFkbwoKfHx8Cgo1LiBMYSBsaXN0YSBkZSBwcm9kdWN0b3MgZmlsdHJhZGEKNi4gRWwgdXN1YXJpbyBhdXRlbnRpY2Fkbwo3LiBRdcOpIGl0ZW0gc2UgZXN0w6EgZWRpdGFuZG8gYWhvcmEgbWlzbW8KOC4gVGVtYSBjbGFyby9vc2N1cm8KCjwhLS0gbm90ZXM6IFZvdGFjacOzbiBhIG1hbm8gYWx6YWRhIG8gV29vY2xhcC4gU29sdWNpb25lczogMSBzw60gKHNlcnZpZG9yKSwgMiBubyAoZGVyaXZhZG8pLCAzIHPDrSAobG9jYWwgZGUgVUkpLCA0IHPDrSAoY29tcGFydGlkbywgbyBVUkwpLCA1IG5vIChkZXJpdmFkbyBkZSAxIHkgNCksIDYgc8OtIChnbG9iYWwpLCA3IHPDrSAobG9jYWwgZGUgVUkpLCA4OsK/Py4gRWwgMywgNyB5IDggc2lydmVuIHBhcmEgaW50cm9kdWNpciBxdWUgaGF5IHRpcG9zIGRpc3RpbnRvcyBkZSBlc3RhZG8uIC0tPg==">
+<h2>En la lista de la compra, ¿es estado?</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><div class="col"><ol>
+<li>La lista de productos</li>
+<li>El número de productos pendientes</li>
+<li>El texto del input “añadir producto” mientras se escribe</li>
+<li>El filtro “solo mostrar pendientes” activado/desactivado</li>
+</ol></div><div class="col"><ol start="5">
+<li>La lista de productos filtrada</li>
+<li>El usuario autenticado</li>
+<li>Qué item se está editando ahora mismo</li>
+<li>Tema claro/oscuro</li>
+</ol></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">8 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="8" data-chapter="0" data-colloquium-md="IyMgTm8gdG9kbyBlbCBlc3RhZG8gZXMgaWd1YWwKCnwgVGlwbyB8IEVqZW1wbG8gfCBEw7NuZGUgdml2ZSB8CnwtLS18LS0tfC0tLXwKfCBMb2NhbCBkZSBVSSB8IHRleHRvIGRlIHVuIGlucHV0LCBtb2RhbCBhYmllcnRvIHwgZWwgcHJvcGlvIGNvbXBvbmVudGUgfAp8IENvbXBhcnRpZG8gZGUgY2xpZW50ZSB8IGZpbHRybywgdGVtYSBvc2N1cm8gfCBhbmNlc3RybyBjb23Dum4gwrcgKnByb3ZpZGUvaW5qZWN0KiDCtyAqc3RvcmUqIHwKfCBEZSBzZXJ2aWRvciB8IGxpc3RhIGRlIHByb2R1Y3RvcyB8IGNhY2jDqSBkZSBzZXJ2aWRvciAoVGFuU3RhY2sgUXVlcnnigKYpIHwKfCBQZXJzaXN0ZW50ZSBsb2NhbCB8IHByZWZlcmVuY2lhcyB8ICpzdG9yZSogY29uIGBsb2NhbFN0b3JhZ2VgIHwKCjxkaXYgY2xhc3M9ImNvbGxvcXVpdW0tc3BhY2VyLXNtIj48L2Rpdj4KClZhbW9zIGEgaXIgdmllbmRvIGxhcyBkaXN0aW50YXMgb3BjaW9uZXM=">
+<h2>No todo el estado es igual</h2>
+<div class="slide-content"><table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Ejemplo</th>
+<th>Dónde vive</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local de UI</td>
+<td>texto de un input, modal abierto</td>
+<td>el propio componente</td>
+</tr>
+<tr>
+<td>Compartido de cliente</td>
+<td>filtro, tema oscuro</td>
+<td>ancestro común · <em>provide/inject</em> · <em>store</em></td>
+</tr>
+<tr>
+<td>De servidor</td>
+<td>lista de productos</td>
+<td>caché de servidor (TanStack Query…)</td>
+</tr>
+<tr>
+<td>Persistente local</td>
+<td>preferencias</td>
+<td><em>store</em> con <code>localStorage</code></td>
+</tr>
+</tbody>
+</table>
+<div class="colloquium-spacer-sm"></div>
+<p>Vamos a ir viendo las distintas opciones</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">9 / 45</span></div></div>
+</section>
+
+<section class="slide slide--section-break has-chapter-bar" data-index="9" data-chapter="1" data-chapter-start data-chapter-title="Estado en el árbol" data-colloquium-md="PCEtLSBsYXlvdXQ6IHNlY3Rpb24tYnJlYWsgLS0+Cgo8IS0tIGNoYXB0ZXI6IEVzdGFkbyBlbiBlbCDDoXJib2wgLS0+Cgo8IS0tIGNoYXB0ZXItc2hvcnQ6IEVsIMOhcmJvbCAtLT4KCiMjIDguMiBFbCBlc3RhZG8gZW4gZWwgw6FyYm9sIGRlIGNvbXBvbmVudGVz">
+<h2>8.2 El estado en el árbol de componentes</h2>
+<nav class="colloquium-chapter-bar colloquium-chapter-bar--chapters" aria-label="Chapters"><a class="colloquium-chapter-bar-item done" href="#5" title="Qué es el estado" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Qué es</span></a><a class="colloquium-chapter-bar-item current" href="#10" title="Estado en el árbol" style="--chapter-progress: 100%" aria-current="step"><span class="colloquium-chapter-bar-label">El árbol</span></a><a class="colloquium-chapter-bar-item upcoming" href="#20" title="Estado global de cliente" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">Store</span></a><a class="colloquium-chapter-bar-item upcoming" href="#32" title="Estado del servidor" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">Servidor</span></a><a class="colloquium-chapter-bar-item upcoming" href="#42" title="En resumen" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">En resumen</span></a></nav>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">10 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="10" data-chapter="1" data-colloquium-md="IyMgUmVjb3JkYWQgcXVlIGxhcyBhcHBzIHNvbiDDoXJib2xlcyBkZSBjb21wb25lbnRlcwoKIVtdKGltYWdlc19lc3RhZG8vY29tcG9uZW50X3RyZWUucG5nKQoKwr9RdcOpIGNvbXBvbmVudGVzIGd1YXJkYW4gZXN0YWRvPyDCv1F1acOpbiBndWFyZGEgcXXDqT8=">
+<h2>Recordad que las apps son árboles de componentes</h2>
+<div class="slide-content"><p><img src="images_estado/component_tree.png" alt="" /></p>
+<p>¿Qué componentes guardan estado? ¿Quién guarda qué?</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">11 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="11" data-chapter="1" data-colloquium-md="IyMgUHJpbWVyYSBwb3NpYmlsaWRhZDogY2FkYSBjb21wb25lbnRlIGd1YXJkYSBzdSBlc3RhZG8KCmBgYGphdmFzY3JpcHQKPHNjcmlwdCBzZXR1cD4KaW1wb3J0IHsgcmVmIH0gZnJvbSAndnVlJwpjb25zdCBwcm9wcyA9IGRlZmluZVByb3BzKFsnaWQnLCAnbm9tYnJlJywgJ2NvbXByYWRvJ10pCmNvbnN0IGNvbXByYWRvID0gcmVmKHByb3BzLmNvbXByYWRvKQpjb25zdCB0b2dnbGUgPSAoKSA9PiB7IGNvbXByYWRvLnZhbHVlID0gIWNvbXByYWRvLnZhbHVlIH0KPC9zY3JpcHQ+Cgo8dGVtcGxhdGU+CiAgPGxpIDpjbGFzcz0ieyB0YWNoYWRvOiBjb21wcmFkbyB9IiBAY2xpY2s9InRvZ2dsZSI+e3sgbm9tYnJlIH19PC9saT4KPC90ZW1wbGF0ZT4KYGBgCgoqKlByb2JsZW1hKio6IMK/Y8OzbW8gY29udGFyw61hIHVuIGNvbXBvbmVudGUgYFJlc3VtZW5gIGxvcyBpdGVtcyBwZW5kaWVudGVzPyDCv0PDs21vIGZpbHRyYW1vcyB1IG9yZGVuYW1vcz8KCkVsIGVzdGFkbyBlc3TDoSByZXBhcnRpZG8gZW4gTiBjb21wb25lbnRlcyBxdWUgbm8gc2UgdmVuIGVudHJlIHPDrQ==">
+<h2>Primera posibilidad: cada componente guarda su estado</h2>
+<div class="slide-content"><pre><code class="language-javascript">&lt;script setup&gt;
+import { ref } from 'vue'
+const props = defineProps(['id', 'nombre', 'comprado'])
+const comprado = ref(props.comprado)
+const toggle = () =&gt; { comprado.value = !comprado.value }
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;li :class=&quot;{ tachado: comprado }&quot; @click=&quot;toggle&quot;&gt;{{ nombre }}&lt;/li&gt;
+&lt;/template&gt;
+</code></pre>
+<p><strong>Problema</strong>: ¿cómo contaría un componente <code>Resumen</code> los items pendientes? ¿Cómo filtramos u ordenamos?</p>
+<p>El estado está repartido en N componentes que no se ven entre sí</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">12 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-code-size: 0.7em; --colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="12" data-chapter="1" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCjwhLS0gc3R5bGU6IC0tY29sbG9xdWl1bS1jb2RlLXNpemU6IDAuN2VtIC0tPgoKIyMgRWwgZXN0YWRvIGludHJvZHVjZSBjb21wbGVqaWRhZAoKVW4gY29tcG9uZW50ZSAqKnNpbiBlc3RhZG8qKiAgbyAqcHJlc2VudGFjaW9uYWwqIGVzIHVuYSBmdW5jacOzbiBwdXJhOiBwcm9wcyDihpIgSFRNTAoKCmBgYGphdmFzY3JpcHQKPHNjcmlwdCBzZXR1cD4KZGVmaW5lUHJvcHMoWydpZCcsICdub21icmUnLCAnY29tcHJhZG8nXSkKZGVmaW5lRW1pdHMoWyd0b2dnbGUnLCAnYm9ycmFyJ10pCjwvc2NyaXB0PgoKPHRlbXBsYXRlPgogIDxzcGFuIDpjbGFzcz0ieyB0YWNoYWRvOiBjb21wcmFkbyB9IgogICAgICAgIEBjbGljaz0iJGVtaXQoJ3RvZ2dsZScsIGlkKSI+CiAgICB7eyBub21icmUgfX0KICA8L3NwYW4+CiAgPGJ1dHRvbiBAY2xpY2s9IiRlbWl0KCdib3JyYXInLCBpZCkiPkVsaW1pbmFyPC9idXR0b24+CjwvdGVtcGxhdGU+CmBgYAoKfHx8CgpDb21wb25lbnRlcyAqKnByZXNlbnRhY2lvbmFsZXMqKjoKCi0gTcOhcyByZXV0aWxpemFibGVzCi0gTcOhcyBmw6FjaWxlcyBkZSB0ZXN0ZWFyCi0gU2luIGVmZWN0b3MgbGF0ZXJhbGVzOiBtZW5vcyAqZGVidWdnaW5nKgoKPGRpdiBjbGFzcz0iY29sbG9xdWl1bS1zcGFjZXItbWQiPjwvZGl2PgoKYGBgYm94CnRpdGxlOiBPYmpldGl2bwp0b25lOiBhY2NlbnQKY29udGVudDogTXVjaG9zIGNvbXBvbmVudGVzIHByZXNlbnRhY2lvbmFsZXMgeSBwb2NvcyBjb24gZXN0YWRvLiBQZXJvIMK/Y3XDoWxlcz8KYGBgCgo8IS0tIG5vdGVzOiBFbWl0aXIgZXZlbnRvcyBubyBlcyB1biBlZmVjdG8gbGF0ZXJhbCBkZWwgY29tcG9uZW50ZTogc29sbyBkaWNlICJoYW4gaGVjaG8gY2xpY2sgZW4gZWwgaXRlbSA1Ii4gRWwgZWZlY3RvIGxvIHByb2R1Y2UgcXVpZW4gY2FtYmllIGVsIGVzdGFkbyBlbiByZXNwdWVzdGEuIC0tPg==">
+<h2>El estado introduce complejidad</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><p>Un componente <strong>sin estado</strong>  o <em>presentacional</em> es una función pura: props → HTML</p>
+<pre><code class="language-javascript">&lt;script setup&gt;
+defineProps(['id', 'nombre', 'comprado'])
+defineEmits(['toggle', 'borrar'])
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;span :class=&quot;{ tachado: comprado }&quot;
+        @click=&quot;$emit('toggle', id)&quot;&gt;
+    {{ nombre }}
+  &lt;/span&gt;
+  &lt;button @click=&quot;$emit('borrar', id)&quot;&gt;Eliminar&lt;/button&gt;
+&lt;/template&gt;
+</code></pre></div><div class="col"><p>Componentes <strong>presentacionales</strong>:</p>
+<ul>
+<li>Más reutilizables</li>
+<li>Más fáciles de testear</li>
+<li>Sin efectos laterales: menos <em>debugging</em></li>
+</ul>
+<div class="colloquium-spacer-md"></div>
+<div class="colloquium-box colloquium-box--accent">
+<div class="colloquium-box-title">Objetivo</div>
+<div class="colloquium-box-content"><p>Muchos componentes presentacionales y pocos con estado. Pero ¿cuáles?</p></div>
+</div></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">13 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="13" data-chapter="1" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCiMjIExldmFudGFyIGVsIGVzdGFkbyAoKmxpZnRpbmcgc3RhdGUgdXAqKQoKPiBFbCBlc3RhZG8gZGViZSBzdWJpciBhbCAqKmFuY2VzdHJvIGNvbcO6biBtw6FzIGNlcmNhbm8qKiBkZSBsb3MgY29tcG9uZW50ZXMgcXVlIGxvIG5lY2VzaXRlbgoKU2UgZm9ybXVsw7MgZW4gW1JlYWN0XShodHRwczovL3JlYWN0LmRldi9sZWFybi9zaGFyaW5nLXN0YXRlLWJldHdlZW4tY29tcG9uZW50cyksIHBlcm8gaG95IGxvIGFzdW1lbiB0b2RvcyBsb3MgKmZyYW1ld29ya3MqCgp8fHwKCiFbXShpbWFnZXNfZXN0YWRvL2xpZnRfc3RhdGUuc3ZnKQ==">
+<h2>Levantar el estado (<em>lifting state up</em>)</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><blockquote>
+<p>El estado debe subir al <strong>ancestro común más cercano</strong> de los componentes que lo necesiten</p>
+</blockquote>
+<p>Se formuló en <a href="https://react.dev/learn/sharing-state-between-components">React</a>, pero hoy lo asumen todos los <em>frameworks</em></p></div><div class="col"><p><img src="images_estado/lift_state.svg" alt="" /></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">14 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-40-60" style="--colloquium-columns: minmax(0, 40fr) minmax(0, 60fr);" data-index="14" data-chapter="1" data-colloquium-md="PCEtLSBjbGFzczogY29scy00MC02MCAtLT4KCiMjIEFsIGFuY2VzdHJvIGNvbcO6biAqKm3DoXMgY2VyY2FubyoqCgpObyBlcyAiY3VhbnRvIG3DoXMgYWx0bywgbWVqb3IiOgoKLSBNw6FzIGFycmliYSA9IG3DoXMgY29tcG9uZW50ZXMgc2UgcmUtcmVuZGVyaXphbgotIE3DoXMgYXJyaWJhID0gbcOhcyBuaXZlbGVzIHBvciBsb3MgcXVlIHBhc2FyICpwcm9wcyoKCmBQYW5lbGAgbm8gbmVjZXNpdGEgbGEgbGlzdGE6IG5vIGhheSByYXrDs24gcGFyYSBzdWJpcmxhIGEgYEFwcGAKCnx8fAoKIVtdKGltYWdlc19lc3RhZG8vbGlmdF9zdGF0ZV8yLnN2Zyk=">
+<h2>Al ancestro común <strong>más cercano</strong></h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);"><div class="col"><p>No es “cuanto más alto, mejor”:</p>
+<ul>
+<li>Más arriba = más componentes se re-renderizan</li>
+<li>Más arriba = más niveles por los que pasar <em>props</em></li>
+</ul>
+<p><code>Panel</code> no necesita la lista: no hay razón para subirla a <code>App</code></p></div><div class="col"><p><img src="images_estado/lift_state_2.svg" alt="" /></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">15 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="15" data-chapter="1" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCiMjIEZsdWpvIGRlIGRhdG9zIHVuaWRpcmVjY2lvbmFsCgpFbCBhbmNlc3RybyBlcyBsYSAqKmZ1ZW50ZSBkZSB2ZXJkYWQqKjoKCjEuIEVsIGFuY2VzdHJvIHRpZW5lIGVsIGVzdGFkbwoyLiBMb3MgZGF0b3MgKipiYWphbioqIGNvbW8gKnByb3BzKgozLiBMb3MgaGlqb3Mgbm8gY2FtYmlhbiBlbCBlc3RhZG86ICoqc3ViZW4qKiBldmVudG9zCgp8fHwKCiFbXShpbWFnZXNfZXN0YWRvL2RhdGFfZmxvdy5wbmcp">
+<h2>Flujo de datos unidireccional</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><p>El ancestro es la <strong>fuente de verdad</strong>:</p>
+<ol>
+<li>El ancestro tiene el estado</li>
+<li>Los datos <strong>bajan</strong> como <em>props</em></li>
+<li>Los hijos no cambian el estado: <strong>suben</strong> eventos</li>
+</ol></div><div class="col"><p><img src="images_estado/data_flow.png" alt="" /></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">16 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" style="--colloquium-code-size: 0.7em" data-index="16" data-chapter="1" data-colloquium-md="PCEtLSBzdHlsZTogLS1jb2xsb3F1aXVtLWNvZGUtc2l6ZTogMC43ZW0gLS0+CgojIyBFbCBhbmNlc3RybyBjb24gZXN0YWRvLCBlbiBjw7NkaWdvCgpgYGBqYXZhc2NyaXB0CjwhLS0gTGlzdGFDb21wcmEudnVlIC0tPgo8c2NyaXB0IHNldHVwPgpjb25zdCBpdGVtcyA9IHJlZihbXSkKY29uc3QgcGVuZGllbnRlcyA9IGNvbXB1dGVkKCgpID0+IGl0ZW1zLnZhbHVlLmZpbHRlcihpID0+ICFpLmNvbXByYWRvKS5sZW5ndGgpCgpmdW5jdGlvbiB0b2dnbGUoaWQpIHsKICBjb25zdCBpdGVtID0gaXRlbXMudmFsdWUuZmluZChpID0+IGkuaWQgPT09IGlkKQogIGl0ZW0uY29tcHJhZG8gPSAhaXRlbS5jb21wcmFkbwp9Cjwvc2NyaXB0PgoKPHRlbXBsYXRlPgogIDxJdGVtIHYtZm9yPSJpdCBpbiBpdGVtcyIgOmtleT0iaXQuaWQiIHYtYmluZD0iaXQiCiAgICAgICAgQHRvZ2dsZT0idG9nZ2xlIiBAYm9ycmFyPSJib3JyYXIiIC8+CiAgPFJlc3VtZW4gOnBlbmRpZW50ZXM9InBlbmRpZW50ZXMiIC8+CjwvdGVtcGxhdGU+CmBgYAoKVW4gc29sbyBzaXRpbyBkb25kZSBjYW1iaWEgYGl0ZW1zYCDihpIgZsOhY2lsIGRlIHJhem9uYXIgeSBkZSBkZXB1cmFy">
+<h2>El ancestro con estado, en código</h2>
+<div class="slide-content"><pre><code class="language-javascript">&lt;!-- ListaCompra.vue --&gt;
+&lt;script setup&gt;
+const items = ref([])
+const pendientes = computed(() =&gt; items.value.filter(i =&gt; !i.comprado).length)
+
+function toggle(id) {
+  const item = items.value.find(i =&gt; i.id === id)
+  item.comprado = !item.comprado
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;Item v-for=&quot;it in items&quot; :key=&quot;it.id&quot; v-bind=&quot;it&quot;
+        @toggle=&quot;toggle&quot; @borrar=&quot;borrar&quot; /&gt;
+  &lt;Resumen :pendientes=&quot;pendientes&quot; /&gt;
+&lt;/template&gt;
+</code></pre>
+<p>Un solo sitio donde cambia <code>items</code> → fácil de razonar y de depurar</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">17 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-40-60" style="--colloquium-columns: minmax(0, 40fr) minmax(0, 60fr);" data-index="17" data-chapter="1" data-colloquium-md="PCEtLSBjbGFzczogY29scy00MC02MCAtLT4KCiMjIEN1YW5kbyBlbCDDoXJib2wgY3JlY2U6ICpwcm9wIGRyaWxsaW5nKgoKUXVlcmVtb3MgbW9zdHJhciBlbCB1c3VhcmlvIGVuIHVuIGBBdmF0YXJgIGRlbnRybyBkZWwgYE1lbsO6YAoKLSBgQXBwYCB0aWVuZSBlbCB1c3VhcmlvCi0gYFBhbmVsYCB5IGBNZW7DumAgdGllbmVuIHF1ZSByZWNpYmlyIGxhICpwcm9wKiBzb2xvIHBhcmEgcG9kZXIgcGFzYXJsYSBoYWNpYSBhYmFqbwotIExvcyBjb21wb25lbnRlcyBpbnRlcm1lZGlvcyBxdWVkYW4gYWNvcGxhZG9zIGEgdW4gZGF0byBxdWUgbm8gdXNhbgoKfHx8CgohW10oaW1hZ2VzX2VzdGFkby9wcm9wX2RyaWxsaW5nLnBuZyk=">
+<h2>Cuando el árbol crece: <em>prop drilling</em></h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);"><div class="col"><p>Queremos mostrar el usuario en un <code>Avatar</code> dentro del <code>Menú</code></p>
+<ul>
+<li><code>App</code> tiene el usuario</li>
+<li><code>Panel</code> y <code>Menú</code> tienen que recibir la <em>prop</em> solo para poder pasarla hacia abajo</li>
+<li>Los componentes intermedios quedan acoplados a un dato que no usan</li>
+</ul></div><div class="col"><p><img src="images_estado/prop_drilling.png" alt="" /></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">18 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" style="--colloquium-code-size: 0.7em" data-index="18" data-chapter="1" data-colloquium-md="PCEtLSBzdHlsZTogLS1jb2xsb3F1aXVtLWNvZGUtc2l6ZTogMC43ZW0gLS0+CgojIyBFbiBWdWU6IGBwcm92aWRlYCAvIGBpbmplY3RgCgpgYGBqYXZhc2NyaXB0Ci8vIEFwcC52dWU6IGVsIGR1ZcOxbyBzaWd1ZSBzaWVuZG8gQXBwCmNvbnN0IHVzdWFyaW8gPSByZWYobnVsbCkKLy9yZWFkb25seSBkZXZ1ZWx2ZSB1biBwcm94eSBkZSBzb2xvIGxlY3R1cmEsIHNpIG1vZGlmaWNhbW9zIGFsZ28gZGFyw6EgZXJyb3Ivbm8gZnVuY2lvbmFyw6EKcHJvdmlkZSgndXN1YXJpbycsIHJlYWRvbmx5KHVzdWFyaW8pKQpwcm92aWRlKCdsb2dvdXQnLCAoKSA9PiB7IHVzdWFyaW8udmFsdWUgPSBudWxsIH0pCmBgYAoKYGBgamF2YXNjcmlwdAovLyBBdmF0YXIudnVlOiBhIGN1YWxxdWllciBwcm9mdW5kaWRhZApjb25zdCB1c3VhcmlvID0gaW5qZWN0KCd1c3VhcmlvJykKY29uc3QgbG9nb3V0ID0gaW5qZWN0KCdsb2dvdXQnKQpgYGAKCi0gU2Ugc2FsdGEgbG9zIG5pdmVsZXMgaW50ZXJtZWRpb3MgcGVybyBzb2xvIGxvIHB1ZWRlbiByZWNpYmlyIGxvcyBkZXNjZW5kaWVudGVzCi0gTWFudGllbmUgZWwgZmx1am8gdW5pZGlyZWNjaW9uYWwKLSBFbiBSZWFjdDogYGNyZWF0ZUNvbnRleHRgIC8gYHVzZUNvbnRleHRg">
+<h2>En Vue: <code>provide</code> / <code>inject</code></h2>
+<div class="slide-content"><pre><code class="language-javascript">// App.vue: el dueño sigue siendo App
+const usuario = ref(null)
+//readonly devuelve un proxy de solo lectura, si modificamos algo dará error/no funcionará
+provide('usuario', readonly(usuario))
+provide('logout', () =&gt; { usuario.value = null })
+</code></pre>
+<pre><code class="language-javascript">// Avatar.vue: a cualquier profundidad
+const usuario = inject('usuario')
+const logout = inject('logout')
+</code></pre>
+<ul>
+<li>Se salta los niveles intermedios pero solo lo pueden recibir los descendientes</li>
+<li>Mantiene el flujo unidireccional</li>
+<li>En React: <code>createContext</code> / <code>useContext</code></li>
+</ul>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">19 / 45</span></div></div>
+</section>
+
+<section class="slide slide--section-break has-chapter-bar" data-index="19" data-chapter="2" data-chapter-start data-chapter-title="Estado global de cliente" data-colloquium-md="PCEtLSBsYXlvdXQ6IHNlY3Rpb24tYnJlYWsgLS0+Cgo8IS0tIGNoYXB0ZXI6IEVzdGFkbyBnbG9iYWwgZGUgY2xpZW50ZSAtLT4KCjwhLS0gY2hhcHRlci1zaG9ydDogU3RvcmUgLS0+CgojIyA4LjMgRXN0YWRvIGdsb2JhbCBkZSBjbGllbnRlOiBlbCBwYXRyw7NuICpzdG9yZSo=">
+<h2>8.3 Estado global de cliente: el patrón <em>store</em></h2>
+<nav class="colloquium-chapter-bar colloquium-chapter-bar--chapters" aria-label="Chapters"><a class="colloquium-chapter-bar-item done" href="#5" title="Qué es el estado" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Qué es</span></a><a class="colloquium-chapter-bar-item done" href="#10" title="Estado en el árbol" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">El árbol</span></a><a class="colloquium-chapter-bar-item current" href="#20" title="Estado global de cliente" style="--chapter-progress: 100%" aria-current="step"><span class="colloquium-chapter-bar-label">Store</span></a><a class="colloquium-chapter-bar-item upcoming" href="#32" title="Estado del servidor" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">Servidor</span></a><a class="colloquium-chapter-bar-item upcoming" href="#42" title="En resumen" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">En resumen</span></a></nav>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">20 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-50-50" style="--colloquium-columns: minmax(0, 50fr) minmax(0, 50fr);" data-index="20" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy01MC01MCAtLT4KCiMjIExldmFudGFyIGVsIGVzdGFkbyAidmVyc2nDs24gZXh0cmVtYSIKCi0gU2FjYXIgZWwgZXN0YWRvIGZ1ZXJhIGRlbCDDoXJib2w6IHVuICoqYWxtYWPDqW4gY2VudHJhbGl6YWRvKiogKCoqc3RvcmUqKikgY29uIGVsIGVzdGFkbyBjb21wYXJ0aWRvCi0gTG9zIGNvbXBvbmVudGVzIGxvIGxlZW4geSBsZSBwaWRlbiBjYW1iaW9zCi0gQ2FzaSB0b2RvcyBsb3MgY29tcG9uZW50ZXMgcGFzYW4gYSBzZXIgcHJlc2VudGFjaW9uYWxlcwoKfHx8CgohW10oaW1hZ2VzX2VzdGFkby9kYXRhX2Zsb3cxLnN2Zyk=">
+<h2>Levantar el estado “versión extrema”</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 50fr) minmax(0, 50fr);"><div class="col"><ul>
+<li>Sacar el estado fuera del árbol: un <strong>almacén centralizado</strong> (<strong>store</strong>) con el estado compartido</li>
+<li>Los componentes lo leen y le piden cambios</li>
+<li>Casi todos los componentes pasan a ser presentacionales</li>
+</ul></div><div class="col"><p><img src="images_estado/data_flow1.svg" alt="" /></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">21 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-70-30" style="--colloquium-columns: minmax(0, 70fr) minmax(0, 30fr);" data-index="21" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy03MC0zMCAtLT4KCiMjIFVuICpzdG9yZSogImNhc2VybyIKCmBgYGphdmFzY3JpcHQKLy8gc3RvcmUuanM6IG3Ds2R1bG8gPSBhbCBpbXBvcnRhciwgdW5hIMO6bmljYSBpbnN0YW5jaWEKaW1wb3J0IHsgcmVhY3RpdmUgfSBmcm9tICd2dWUnCgpleHBvcnQgY29uc3Qgc3RvcmUgPSB7CiAgc3RhdGU6IHJlYWN0aXZlKHsgbWVzc2FnZTogJ0hlbGxvIScgfSksCiAgc2V0TWVzc2FnZShudWV2bykgeyB0aGlzLnN0YXRlLm1lc3NhZ2UgPSBudWV2byB9LAogIGNsZWFyTWVzc2FnZSgpIHsgdGhpcy5zdGF0ZS5tZXNzYWdlID0gJycgfQp9CmBgYAoKLSBMb3MgY29tcG9uZW50ZXMgKipubyBtb2RpZmljYW4gZGlyZWN0YW1lbnRlKiogZWwgZXN0YWRvCi0gTG9zIGNhbWJpb3MgcGFzYW4gcG9yICoqbcOpdG9kb3MgZGVsICpzdG9yZSoqKgoKCnx8fAoKIVtdKGltYWdlc19lc3RhZG8vc2ltcGxlX3N0b3JlLnBuZykKW0VqZW1wbG8gb25saW5lXShodHRwczovL3N0YWNrYmxpdHouY29tL2VkaXQvdml0ZWpzLXZpdGUteGx5a3ViP2ZpbGU9c3JjJTJGQXBwLnZ1ZSk=">
+<h2>Un <em>store</em> “casero”</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 70fr) minmax(0, 30fr);"><div class="col"><pre><code class="language-javascript">// store.js: módulo = al importar, una única instancia
+import { reactive } from 'vue'
+
+export const store = {
+  state: reactive({ message: 'Hello!' }),
+  setMessage(nuevo) { this.state.message = nuevo },
+  clearMessage() { this.state.message = '' }
+}
+</code></pre>
+<ul>
+<li>Los componentes <strong>no modifican directamente</strong> el estado</li>
+<li>Los cambios pasan por <strong>métodos del <em>store</em></strong></li>
+</ul></div><div class="col"><p><img src="images_estado/simple_store.png" alt="" />
+<a href="https://stackblitz.com/edit/vitejs-vite-xlykub?file=src%2FApp.vue">Ejemplo online</a></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">22 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="22" data-chapter="2" data-colloquium-md="IyMgSW1wbGVtZW50YWNpw7NuIHByb3BpYSB2cyBsaWJyZXLDrWEgZXN0w6FuZGFyCgpBdW5xdWUgeWEgaGVtb3MgdmlzdG8gcXVlIGVzIG11eSBzZW5jaWxsbyBpbXBsZW1lbnRhciBkZSBjZXJvIHVuICpzdG9yZSosIGVuIFZ1ZSBzZSB1c2EgaGFiaXR1YWxtZW50ZSB1bmEgbGlicmVyw61hICJlc3TDoW5kYXIiOiBbKipQaW5pYSoqXShodHRwczovL3BpbmlhLnZ1ZWpzLm9yZy8pCgpWZW50YWphczoKCi0gSW50ZWdyYWNpw7NuIGNvbiBsYXMgKmRldnRvb2xzKgotIEludGVncmFjacOzbiBjb24gU1NSIChTZXJ2ZXIgU2lkZSBSZW5kZXJpbmcsIGxvIHZlcmVtb3MgZW4gZWwgcHLDs3hpbW8gdGVtYSkKLSAqUGx1Z2lucyoKLSBVdGlsaWRhZGVzIGRlICp0ZXN0aW5nKg==">
+<h2>Implementación propia vs librería estándar</h2>
+<div class="slide-content"><p>Aunque ya hemos visto que es muy sencillo implementar de cero un <em>store</em>, en Vue se usa habitualmente una librería “estándar”: <a href="https://pinia.vuejs.org/"><strong>Pinia</strong></a></p>
+<p>Ventajas:</p>
+<ul>
+<li>Integración con las <em>devtools</em></li>
+<li>Integración con SSR (Server Side Rendering, lo veremos en el próximo tema)</li>
+<li><em>Plugins</em></li>
+<li>Utilidades de <em>testing</em></li>
+</ul>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">23 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="23" data-chapter="2" data-colloquium-md="IyMgRGUgZMOzbmRlIHZpZW5lIFBpbmlhCgp8IEHDsW8gfCB8IHwKfC0tLXwtLS18LS0tfAp8IDIwMTIgfCBbQXJxdWl0ZWN0dXJhIEVsbV0oaHR0cHM6Ly9ndWlkZS5lbG0tbGFuZy5vcmcvYXJjaGl0ZWN0dXJlLykgfCBlc3RhZG8gKyBtZW5zYWplcyArIGZ1bmNpw7NuIGRlIGFjdHVhbGl6YWNpw7NuIHwKfCAyMDE0IHwgW0ZsdXhdKGh0dHBzOi8vZmFjZWJvb2thcmNoaXZlLmdpdGh1Yi5pby9mbHV4LykgKEZhY2Vib29rKSB8IHBhdHLDs24gZGUgZmx1am8gdW5pZGlyZWNjaW9uYWwgcGFyYSBSZWFjdCB8CnwgMjAxNSB8IFtSZWR1eF0oaHR0cHM6Ly9yZWR1eC5qcy5vcmcpIHwgbGEgaW1wbGVtZW50YWNpw7NuIGRlIEZsdXggZGUgbcOhcyDDqXhpdG8gfAp8IDIwMTYgfCBbVnVleF0oaHR0cHM6Ly92dWV4LnZ1ZWpzLm9yZykgfCBSZWR1eCBwYXJhIFZ1ZSwgbWVub3MgZnVuY2lvbmFsIChob3kgZW4gbWFudGVuaW1pZW50bykgfAp8IDIwMjEgfCBbUGluaWFdKGh0dHBzOi8vcGluaWEudnVlanMub3JnKSB8IFZ1ZXggc2ltcGxpZmljYWRvOyBlbCAqc3RvcmUqIG9maWNpYWwgZGUgVnVlIHwKCk1pc21hcyBpZGVhcyBlbiBvdHJvcyAqZnJhbWV3b3Jrcyo6IFJlZHV4L1p1c3RhbmQgKFJlYWN0KSwgTmdSeCAoQW5ndWxhcinigKY=">
+<h2>De dónde viene Pinia</h2>
+<div class="slide-content"><table>
+<thead>
+<tr>
+<th>Año</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2012</td>
+<td><a href="https://guide.elm-lang.org/architecture/">Arquitectura Elm</a></td>
+<td>estado + mensajes + función de actualización</td>
+</tr>
+<tr>
+<td>2014</td>
+<td><a href="https://facebookarchive.github.io/flux/">Flux</a> (Facebook)</td>
+<td>patrón de flujo unidireccional para React</td>
+</tr>
+<tr>
+<td>2015</td>
+<td><a href="https://redux.js.org">Redux</a></td>
+<td>la implementación de Flux de más éxito</td>
+</tr>
+<tr>
+<td>2016</td>
+<td><a href="https://vuex.vuejs.org">Vuex</a></td>
+<td>Redux para Vue, menos funcional (hoy en mantenimiento)</td>
+</tr>
+<tr>
+<td>2021</td>
+<td><a href="https://pinia.vuejs.org">Pinia</a></td>
+<td>Vuex simplificado; el <em>store</em> oficial de Vue</td>
+</tr>
+</tbody>
+</table>
+<p>Mismas ideas en otros <em>frameworks</em>: Redux/Zustand (React), NgRx (Angular)…</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">24 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-65-35" style="--colloquium-columns: minmax(0, 65fr) minmax(0, 35fr);" data-index="24" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy02NS0zNSAtLT4KCiMjIFVuICpzdG9yZSogZGUgUGluaWEKCmBgYGphdmFzY3JpcHQKZXhwb3J0IGNvbnN0IHVzZUNvbnRhZG9yU3RvcmUgPSAKIGRlZmluZVN0b3JlKCdjb250YWRvcicsICgpID0+IHsKICAgIGNvbnN0IHZhbG9yID0gcmVmKDApCiAgICBjb25zdCB2YWxvckRvYmxlID0gY29tcHV0ZWQoCiAgICAgICgpID0+IHZhbG9yLnZhbHVlICogMgogICAgKQogICAgZnVuY3Rpb24gaW5jcmVtZW50YXIoKSB7IHZhbG9yLnZhbHVlKysgfQoKICAgIHJldHVybiB7IHZhbG9yLCB2YWxvckRvYmxlLCBpbmNyZW1lbnRhciB9Cn0pCmBgYAoKfHx8Cgp8IFByaW1pdGl2YSBWdWUvSlMgfCBFbiBQaW5pYSB8IFNpZ25pZmljYWRvIHwKfC0tLXwtLS18LS0tfAp8IGByZWZgIHwgc3RhdGUgfCBFbCBlc3RhZG8KfCBgY29tcHV0ZWRgIHwgZ2V0dGVyIHwgVmFsb3JlcyBkZXJpdmFkb3MKfCBgZnVuY3Rpb25gIHwgYWN0aW9uIHwgTMOzZ2ljYSBkZSBuZWdvY2lv">
+<h2>Un <em>store</em> de Pinia</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);"><div class="col"><pre><code class="language-javascript">export const useContadorStore = 
+ defineStore('contador', () =&gt; {
+    const valor = ref(0)
+    const valorDoble = computed(
+      () =&gt; valor.value * 2
+    )
+    function incrementar() { valor.value++ }
+
+    return { valor, valorDoble, incrementar }
+})
+</code></pre></div><div class="col"><table>
+<thead>
+<tr>
+<th>Primitiva Vue/JS</th>
+<th>En Pinia</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ref</code></td>
+<td>state</td>
+<td>El estado</td>
+</tr>
+<tr>
+<td><code>computed</code></td>
+<td>getter</td>
+<td>Valores derivados</td>
+</tr>
+<tr>
+<td><code>function</code></td>
+<td>action</td>
+<td>Lógica de negocio</td>
+</tr>
+</tbody>
+</table></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">25 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="25" data-chapter="2" data-colloquium-md="IyMgVXNhciBlbCAqc3RvcmUqIGVuIHVuIGNvbXBvbmVudGUKCmBgYGphdmFzY3JpcHQKPHNjcmlwdCBzZXR1cD4KaW1wb3J0IHsgdXNlQ29udGFkb3JTdG9yZSB9IGZyb20gJy4vc3RvcmUuanMnCgpjb25zdCBzdG9yZSA9IHVzZUNvbnRhZG9yU3RvcmUoKQo8L3NjcmlwdD4KCjx0ZW1wbGF0ZT4KICA8aDE+e3sgc3RvcmUudmFsb3IgfX08L2gxPgogIDxidXR0b24gQGNsaWNrPSJzdG9yZS5pbmNyZW1lbnRhcigpIj5JbmNyZW1lbnRhcjwvYnV0dG9uPgo8L3RlbXBsYXRlPgpgYGAKCkFjbGFyYWNpw7NuOiBlbCBjb21wb25lbnRlIHB1ZWRlIG11dGFyIGVsIGVzdGFkbzogYHN0b3JlLnZhbG9yKytgIHBlcm8gZXMgYnVlbmEgcHLDoWN0aWNhIGhhY2VybG8gYSB0cmF2w6lzIGRlIHVuYSBhY2Npw7NuCgpbRWwgZWplbXBsbyAqb25saW5lKl0oaHR0cHM6Ly9zdGFja2JsaXR6LmNvbS9lZGl0L3ZpdGVqcy12aXRlLWxmZ2tucz9maWxlPXNyYyUyRkFwcC52dWUp">
+<h2>Usar el <em>store</em> en un componente</h2>
+<div class="slide-content"><pre><code class="language-javascript">&lt;script setup&gt;
+import { useContadorStore } from './store.js'
+
+const store = useContadorStore()
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;h1&gt;{{ store.valor }}&lt;/h1&gt;
+  &lt;button @click=&quot;store.incrementar()&quot;&gt;Incrementar&lt;/button&gt;
+&lt;/template&gt;
+</code></pre>
+<p>Aclaración: el componente puede mutar el estado: <code>store.valor++</code> pero es buena práctica hacerlo a través de una acción</p>
+<p><a href="https://stackblitz.com/edit/vitejs-vite-lfgkns?file=src%2FApp.vue">El ejemplo <em>online</em></a></p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">26 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="26" data-chapter="2" data-colloquium-md="IyMgRmx1am8gdW5pZGlyZWNjaW9uYWwgZW4gUGluaWEKCiFbXShpbWFnZXNfZXN0YWRvL3BpbmlhX2RhdGFfZmxvdy5wbmcpCgo8c3BhbiBjbGFzcz0idGV4dC1zbSI+W0xpc3RhIGRlIGxhIGNvbXByYSBjb24gUGluaWEgeSBzaW4gKmJhY2tlbmQqXShodHRwczovL3N0YWNrYmxpdHouY29tL2dpdGh1Yi9vdHRvY29sL2xpc3RhLWNvbXByYS12dWUtcGluaWEtbG9jYWwpIChjb24gdW4gKnBsdWdpbiogcXVlIHBlcnNpc3RlIGVsIGVzdGFkbyBlbiBsb2NhbFN0b3JhZ2UpPC9zcGFuPg==">
+<h2>Flujo unidireccional en Pinia</h2>
+<div class="slide-content"><p><img src="images_estado/pinia_data_flow.png" alt="" /></p>
+<p><span class="text-sm"><a href="https://stackblitz.com/github/ottocol/lista-compra-vue-pinia-local">Lista de la compra con Pinia y sin <em>backend</em></a> (con un <em>plugin</em> que persiste el estado en localStorage)</span></p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">27 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-50-50" style="--colloquium-columns: minmax(0, 50fr) minmax(0, 50fr);" data-index="27" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy01MC01MCAtLT4KCiMjIE11dGFibGUgdnMuIGlubXV0YWJsZTogUGluaWEgdnMuIFJlZHV4CgoqKlBpbmlhKio6IGxhICphY3Rpb24qICoqbXV0YSoqIGVsIGVzdGFkbzsgbG9zICpwcm94aWVzKiBkZXRlY3RhbiBlbCBjYW1iaW8KCioqUmVkdXgqKjogdW4gKnJlZHVjZXIqIHB1cm8gKipkZXZ1ZWx2ZSB1biBlc3RhZG8gbnVldm8qKjsgc2UgZGV0ZWN0YSBlbCBjYW1iaW8gY29tcGFyYW5kbyByZWZlcmVuY2lhcwoKPGRpdiBjbGFzcz0iY29sbG9xdWl1bS1zcGFjZXItc20iPjwvZGl2PgoKTGEgZGlmZXJlbmNpYSB2aWVuZSBkZWwgKiptb2RlbG8gZGUgcmVhY3RpdmlkYWQqKiBkZSBjYWRhICpmcmFtZXdvcmsqCgo8c3BhbiBjbGFzcz0idGV4dC1zbSI+SG95IHNlIHVzYSBbUmVkdXggVG9vbGtpdF0oaHR0cHM6Ly9yZWR1eC10b29sa2l0LmpzLm9yZyksIHF1ZSBjb24gSW1tZXIgcGVybWl0ZSBlc2NyaWJpciAiY29tbyBzaSIgbXV0YXJhczwvc3Bhbj4KCnx8fAoKIVtdKGltYWdlc19lc3RhZG8vcmVkdXhfZGlhZ3JhbS5wbmcpCgo8IS0tIG5vdGVzOiBSZWFjdCBubyB0aWVuZSBwcm94aWVzOiBwYXJhIHNhYmVyIHNpIGFsZ28gY2FtYmnDsyBjb21wYXJhIHJlZmVyZW5jaWFzICg9PT0pLCBwb3IgZXNvIG5lY2VzaXRhIGlubXV0YWJpbGlkYWQuIFZ1ZSBzYWJlIGV4YWN0YW1lbnRlIHF1w6kgcHJvcGllZGFkIGNhbWJpw7MuIC0tPg==">
+<h2>Mutable vs. inmutable: Pinia vs. Redux</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 50fr) minmax(0, 50fr);"><div class="col"><p><strong>Pinia</strong>: la <em>action</em> <strong>muta</strong> el estado; los <em>proxies</em> detectan el cambio</p>
+<p><strong>Redux</strong>: un <em>reducer</em> puro <strong>devuelve un estado nuevo</strong>; se detecta el cambio comparando referencias</p>
+<div class="colloquium-spacer-sm"></div>
+<p>La diferencia viene del <strong>modelo de reactividad</strong> de cada <em>framework</em></p>
+<p><span class="text-sm">Hoy se usa <a href="https://redux-toolkit.js.org">Redux Toolkit</a>, que con Immer permite escribir “como si” mutaras</span></p></div><div class="col"><p><img src="images_estado/redux_diagram.png" alt="" /></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">28 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-70-30" style="--colloquium-code-size: 0.6em; --colloquium-columns: minmax(0, 70fr) minmax(0, 30fr);" data-index="28" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy03MC0zMCAtLT4KCjwhLS0gc3R5bGU6IC0tY29sbG9xdWl1bS1jb2RlLXNpemU6IDAuNmVtIC0tPgoKIyMgWnVzdGFuZCAoUmVhY3QpCgpgYGBqYXZhc2NyaXB0Ci8vIHN0b3JlLmpzCmltcG9ydCB7IGNyZWF0ZSB9IGZyb20gJ3p1c3RhbmQnCgpleHBvcnQgY29uc3QgdXNlQ291bnRlclN0b3JlID0gY3JlYXRlKChzZXQpID0+ICh7CiAgY291bnQ6IDAsCiAgaW5jcmVtZW50OiAoKSA9PgogICAgc2V0KChzdGF0ZSkgPT4gKHsgY291bnQ6IHN0YXRlLmNvdW50ICsgMSB9KSksCn0pKQpgYGAKCmBgYGphdmFzY3JpcHQKLy8gQXBwLmpzeAppbXBvcnQgeyB1c2VDb3VudGVyU3RvcmUgfSBmcm9tICcuL3N0b3JlLmpzJwoKZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gQXBwKCkgewogIGNvbnN0IGNvdW50ID0gdXNlQ291bnRlclN0b3JlKChzKSA9PiBzLmNvdW50KQogIGNvbnN0IGluY3JlbWVudCA9IHVzZUNvdW50ZXJTdG9yZSgocykgPT4gcy5pbmNyZW1lbnQpCiAgcmV0dXJuIDxidXR0b24gb25DbGljaz17aW5jcmVtZW50fT57Y291bnR9PC9idXR0b24+Cn0KYGBgCnx8fAoKLSBTaW1wbGlmaWNhY2nDs24gZGUgUmVkdXgsIGNvbW8gVnVleCDihpIgUGluaWEKCi0gYHNldGAgZGV2dWVsdmUgdW4gb2JqZXRvIG51ZXZvOiBpbm11dGFiaWxpZGFkLCBjb21vIGVuIFJlZHV4CgpbRWplbXBsbyAqb25saW5lKl0oaHR0cHM6Ly9zdGFja2JsaXR6LmNvbS9lZGl0L3ZpdGVqcy12aXRlLW9lYmQzcTM2KQ==">
+<h2>Zustand (React)</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 70fr) minmax(0, 30fr);"><div class="col"><pre><code class="language-javascript">// store.js
+import { create } from 'zustand'
+
+export const useCounterStore = create((set) =&gt; ({
+  count: 0,
+  increment: () =&gt;
+    set((state) =&gt; ({ count: state.count + 1 })),
+}))
+</code></pre>
+<pre><code class="language-javascript">// App.jsx
+import { useCounterStore } from './store.js'
+
+export default function App() {
+  const count = useCounterStore((s) =&gt; s.count)
+  const increment = useCounterStore((s) =&gt; s.increment)
+  return &lt;button onClick={increment}&gt;{count}&lt;/button&gt;
+}
+</code></pre></div><div class="col"><ul>
+<li>
+<p>Simplificación de Redux, como Vuex → Pinia</p>
+</li>
+<li>
+<p><code>set</code> devuelve un objeto nuevo: inmutabilidad, como en Redux</p>
+</li>
+</ul>
+<p><a href="https://stackblitz.com/edit/vitejs-vite-oebd3q36">Ejemplo <em>online</em></a></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">29 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="29" data-chapter="2" data-colloquium-md="IyMgU3ZlbHRlIHkgU29saWRKUwoKLSAqKlN2ZWx0ZSA1Kio6IGxvcyBbc3RvcmVzXShodHRwczovL3N2ZWx0ZS5kZXYvZG9jcy9zdmVsdGUvc3RvcmVzKSBzaWd1ZW4gZXhpc3RpZW5kbywgcGVybyBsbyByZWNvbWVuZGFkbyBlcyB1biBgJHN0YXRlKClgIGV4cG9ydGFkbyBkZXNkZSB1biBtw7NkdWxvIGAuc3ZlbHRlLmpzYDogdW4gKnN0b3JlKiAiY2FzZXJvIiBjb24gKnJ1bmVzKgotICoqU29saWRKUyoqOiAqc2lnbmFscyogcGFyYSBsbyBzaW1wbGUgeSBbc3RvcmVzXShodHRwczovL2RvY3Muc29saWRqcy5jb20vZ3VpZGVzL2NvbXBsZXgtc3RhdGUtbWFuYWdlbWVudCkgcGFyYSBlc3RhZG8gYW5pZGFkbzsgYWxnbyBpbnRlcm1lZGlvIGVudHJlIFN2ZWx0ZSB5IFBpbmlhCgo8ZGl2IGNsYXNzPSJjb2xsb3F1aXVtLXNwYWNlci1tZCI+PC9kaXY+CgpDb24gcmVhY3RpdmlkYWQgZGUgZ3Jhbm8gZmlubywgdW4gKnN0b3JlKiBwdWVkZSBzZXIgc2ltcGxlbWVudGUgKiplc3RhZG8gcmVhY3Rpdm8gZnVlcmEgZGUgbG9zIGNvbXBvbmVudGVzKio=">
+<h2>Svelte y SolidJS</h2>
+<div class="slide-content"><ul>
+<li><strong>Svelte 5</strong>: los <a href="https://svelte.dev/docs/svelte/stores">stores</a> siguen existiendo, pero lo recomendado es un <code>$state()</code> exportado desde un módulo <code>.svelte.js</code>: un <em>store</em> “casero” con <em>runes</em></li>
+<li><strong>SolidJS</strong>: <em>signals</em> para lo simple y <a href="https://docs.solidjs.com/guides/complex-state-management">stores</a> para estado anidado; algo intermedio entre Svelte y Pinia</li>
+</ul>
+<div class="colloquium-spacer-md"></div>
+<p>Con reactividad de grano fino, un <em>store</em> puede ser simplemente <strong>estado reactivo fuera de los componentes</strong></p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">30 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="30" data-chapter="2" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCiMjIMK/TmVjZXNpdG8gdW4gKnN0b3JlKiBnbG9iYWw/Cgo+ICJQZW9wbGUgb2Z0ZW4gY2hvb3NlIFJlZHV4IGJlZm9yZSB0aGV5IG5lZWQgaXQuIgoKPHNwYW4gY2xhc3M9InRleHQtc20iPkRhbiBBYnJhbW92LCBbWW91IE1pZ2h0IE5vdCBOZWVkIFJlZHV4XShodHRwczovL21lZGl1bS5jb20vQGRhbl9hYnJhbW92L3lvdS1taWdodC1ub3QtbmVlZC1yZWR1eC1iZTQ2MzYwY2YzNjcpPC9zcGFuPgoKfHx8CgpTw60sIHNpOgoKLSBNdWNob3MgY29tcG9uZW50ZXMgYWxlamFkb3MgbGVlbiB5IGVzY3JpYmVuIGxvIG1pc21vCi0gTmVjZXNpdGFzIGRldnRvb2xzLCBwZXJzaXN0ZW5jaWEgbyBTU1IKClNpIG5vOgoKLSBFc3RhZG8gbG9jYWwgKyAqbGlmdGluZyogKyBwcm92aWRlL2luamVjdAotIFkgcGFyYSBkYXRvcyBkZWwgc2Vydmlkb3LigKYgKipzaWd1aWVudGUgcGFydGUqKgoKPCEtLSBub3RlczogTXVjaG8gZGVsICJlc3RhZG8gZ2xvYmFsIiBkZSBsYXMgYXBwcyByZWFsZXMgc29uIGVuIHJlYWxpZGFkIGRhdG9zIGRlbCBzZXJ2aWRvci4gU2kgc2Ugc2FjYW4gZGVsIHN0b3JlLCBlbCBzdG9yZSBxdWVkYSBtdXkgcGVxdWXDsW8gbyBkZXNhcGFyZWNlLiAtLT4=">
+<h2>¿Necesito un <em>store</em> global?</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><blockquote>
+<p>“People often choose Redux before they need it.”</p>
+</blockquote>
+<p><span class="text-sm">Dan Abramov, <a href="https://medium.com/@dan_abramov/you-might-not-need-redux-be46360cf367">You Might Not Need Redux</a></span></p></div><div class="col"><p>Sí, si:</p>
+<ul>
+<li>Muchos componentes alejados leen y escriben lo mismo</li>
+<li>Necesitas devtools, persistencia o SSR</li>
+</ul>
+<p>Si no:</p>
+<ul>
+<li>Estado local + <em>lifting</em> + provide/inject</li>
+<li>Y para datos del servidor… <strong>siguiente parte</strong></li>
+</ul></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">31 / 45</span></div></div>
+</section>
+
+<section class="slide slide--section-break has-chapter-bar" data-index="31" data-chapter="3" data-chapter-start data-chapter-title="Estado del servidor" data-colloquium-md="PCEtLSBsYXlvdXQ6IHNlY3Rpb24tYnJlYWsgLS0+Cgo8IS0tIGNoYXB0ZXI6IEVzdGFkbyBkZWwgc2Vydmlkb3IgLS0+Cgo8IS0tIGNoYXB0ZXItc2hvcnQ6IFNlcnZpZG9yIC0tPgoKIyMgOC40IEVzdGFkbyBkZWwgc2Vydmlkb3I=">
+<h2>8.4 Estado del servidor</h2>
+<nav class="colloquium-chapter-bar colloquium-chapter-bar--chapters" aria-label="Chapters"><a class="colloquium-chapter-bar-item done" href="#5" title="Qué es el estado" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Qué es</span></a><a class="colloquium-chapter-bar-item done" href="#10" title="Estado en el árbol" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">El árbol</span></a><a class="colloquium-chapter-bar-item done" href="#20" title="Estado global de cliente" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Store</span></a><a class="colloquium-chapter-bar-item current" href="#32" title="Estado del servidor" style="--chapter-progress: 100%" aria-current="step"><span class="colloquium-chapter-bar-label">Servidor</span></a><a class="colloquium-chapter-bar-item upcoming" href="#42" title="En resumen" style="--chapter-progress: 0%"><span class="colloquium-chapter-bar-label">En resumen</span></a></nav>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">32 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-2" style="--colloquium-columns: repeat(2, minmax(0, 1fr));" data-index="32" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy0yIC0tPgoKIyMgKkNsaWVudCBzdGF0ZSogdnMuICpzZXJ2ZXIgc3RhdGUqCgoqKkNsaWVudCBzdGF0ZSoqCgotIExvIGNyZWEgZWwgdXN1YXJpbyBlbiBsb2NhbAotIEVzICoqdHV5byoqOiBuYWRpZSBtw6FzIGxvIGNhbWJpYQotIERpc3BvbmlibGUgYWwgaW5zdGFudGUKCkVqOiBsaXN0YSBkZSBsYSBjb21wcmEgbG9jYWwsIGZpbHRyb3MsIHRlbWEKCnx8fAoKKipTZXJ2ZXIgc3RhdGUqKgoKLSBWaXZlIGVuIGVsIHNlcnZpZG9yIChwLmVqLiBTdXBhYmFzZSkKLSAqKk5vIGVzIHR1eW8qKjogdGllbmVzIHVuYSBjb3BpYSBlbiBjYWNow6kuIE90cm9zIGxvIHB1ZWRlbiBjYW1iaWFyIGVuIHNlZ3VuZG8gcGxhbm8KLSBUYXJkYSBlbiBsbGVnYXIsIHB1ZWRlIGZhbGxhcgoKCkVqOiBsaXN0YSBkZSBsYSBjb21wcmEgY29sYWJvcmF0aXZhCgo8IS0tIG5vdGVzOiBFc3RlIGVzIGVsIGJ1ZyBkZSAicmVjYXJnbyB5IHZ1ZWx2ZSBhIGVzdGFyIHNpbiBjb21wcmFyIiB5IGVsIGRlICJkb3MgcGVzdGHDsWFzLCBkb3MgdmVyc2lvbmVzIi4gLS0+">
+<h2><em>Client state</em> vs. <em>server state</em></h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));"><div class="col"><p><strong>Client state</strong></p>
+<ul>
+<li>Lo crea el usuario en local</li>
+<li>Es <strong>tuyo</strong>: nadie más lo cambia</li>
+<li>Disponible al instante</li>
+</ul>
+<p>Ej: lista de la compra local, filtros, tema</p></div><div class="col"><p><strong>Server state</strong></p>
+<ul>
+<li>Vive en el servidor (p.ej. Supabase)</li>
+<li><strong>No es tuyo</strong>: tienes una copia en caché. Otros lo pueden cambiar en segundo plano</li>
+<li>Tarda en llegar, puede fallar</li>
+</ul>
+<p>Ej: lista de la compra colaborativa</p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">33 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content align-center" data-index="33" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogYWxpZ24tY2VudGVyIC0tPgoKPHNwYW4gY2xhc3M9InRleHQtMnhsIj5FbiBlbCBjYXNvIGRlIGxhIGxpc3RhIGRlIGxhIGNvbXByYSAibW9ub3VzdWFyaW8iLCDCv2xhIHByb3BpYSBsaXN0YSBlcyAqY2xpZW50KiBvICpzZXJ2ZXIqIHN0YXRlPzwvc3Bhbj4KCgo8c3BhbiBjbGFzcz0idGV4dC0yeGwiPkVsIGNyaXRlcmlvIGRlY2lzaXZvIGVzICoqcXVpw6luIHRpZW5lIGxhICJmdWVudGUgZGUgdmVyZGFkIioqPC9zcGFuPg==">
+<div class="slide-content"><p><span class="text-2xl">En el caso de la lista de la compra “monousuario”, ¿la propia lista es <em>client</em> o <em>server</em> state?</span></p>
+<p><span class="text-2xl">El criterio decisivo es <strong>quién tiene la “fuente de verdad”</strong></span></p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">34 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="34" data-chapter="3" data-colloquium-md="IyMgTG8gcXVlIGhheSBxdWUgZ2VzdGlvbmFyIGNvbiBlbCAqc2VydmVyIHN0YXRlKgoKLSBFc3RhZG8gZGUgKipjYXJnYSoqICgqbG9hZGluZyopCi0gKipFcnJvcmVzKiogeSByZWludGVudG9zCi0gKipDYWNow6kqKjogbm8gcGVkaXIgbG8gbWlzbW8gZG9zIHZlY2VzCi0gKipEYXRvcyBvYnNvbGV0b3MqKjogY3XDoW5kbyB2b2x2ZXIgYSBwZWRpcgotICoqRHVwbGljYWNpw7NuKio6IGRvcyBjb21wb25lbnRlcyBwaWRlbiBsbyBtaXNtbyBhIGxhIHZlegotICoqU2luY3Jvbml6YXIqKiB0cmFzIG1vZGlmaWNhcjogwr9xdcOpIGRhdG9zIHF1ZWRhbiBkZXNmYXNhZG9zPwoKUGluaWEgbm8gZXN0w6EgcGVuc2FkYSBwYXJhIGVzdG8=">
+<h2>Lo que hay que gestionar con el <em>server state</em></h2>
+<div class="slide-content"><ul>
+<li>Estado de <strong>carga</strong> (<em>loading</em>)</li>
+<li><strong>Errores</strong> y reintentos</li>
+<li><strong>Caché</strong>: no pedir lo mismo dos veces</li>
+<li><strong>Datos obsoletos</strong>: cuándo volver a pedir</li>
+<li><strong>Duplicación</strong>: dos componentes piden lo mismo a la vez</li>
+<li><strong>Sincronizar</strong> tras modificar: ¿qué datos quedan desfasados?</li>
+</ul>
+<p>Pinia no está pensada para esto</p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">35 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="35" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCiMjIEEgbWFubwoKYGBgamF2YXNjcmlwdApjb25zdCBwb3N0cyA9IHJlZihbXSkKY29uc3QgbG9hZGluZyA9IHJlZihmYWxzZSkKY29uc3QgZXJyb3IgPSByZWYobnVsbCkKCm9uTW91bnRlZChhc3luYyAoKSA9PiB7CiAgbG9hZGluZy52YWx1ZSA9IHRydWUKICB0cnkgewogICAgcG9zdHMudmFsdWUgPSBhd2FpdCBnZXRQb3N0cygpCiAgfSBjYXRjaCAoZSkgewogICAgZXJyb3IudmFsdWUgPSBlCiAgfSBmaW5hbGx5IHsKICAgIGxvYWRpbmcudmFsdWUgPSBmYWxzZQogIH0KfSkKYGBgCgp8fHwKCi0gQ2FkYSBjb21wb25lbnRlIGhhY2Ugc3UgYGZldGNoYAotICpsb2FkaW5nKi8qZXJyb3IqIGR1cGxpY2Fkb3MgZW4gdG9kb3MKLSBTaW4gY2FjaMOpIG5pIHJldmFsaWRhY2nDs24KLSBQZXRpY2lvbmVzIHJlcGV0aWRhcyBzaSB2YXJpb3MgY29tcG9uZW50ZXMgbXVlc3RyYW4gbG8gbWlzbW8KLSBZIHB1ZWRlbiBxdWVkYXIgKipkZXNpbmNyb25pemFkb3MqKjogY2FkYSB1bm8gdGllbmUgc3UgY29waWEgZGUgbG9zIGRhdG9z">
+<h2>A mano</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><pre><code class="language-javascript">const posts = ref([])
+const loading = ref(false)
+const error = ref(null)
+
+onMounted(async () =&gt; {
+  loading.value = true
+  try {
+    posts.value = await getPosts()
+  } catch (e) {
+    error.value = e
+  } finally {
+    loading.value = false
+  }
+})
+</code></pre></div><div class="col"><ul>
+<li>Cada componente hace su <code>fetch</code></li>
+<li><em>loading</em>/<em>error</em> duplicados en todos</li>
+<li>Sin caché ni revalidación</li>
+<li>Peticiones repetidas si varios componentes muestran lo mismo</li>
+<li>Y pueden quedar <strong>desincronizados</strong>: cada uno tiene su copia de los datos</li>
+</ul></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">36 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-55-45" style="--colloquium-code-size: 0.6em; --colloquium-columns: minmax(0, 55fr) minmax(0, 45fr);" data-index="36" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy01NS00NSAtLT4KCjwhLS0gc3R5bGU6IC0tY29sbG9xdWl1bS1jb2RlLXNpemU6IDAuNmVtIC0tPgoKIyMgVGFuU3RhY2sgUXVlcnkKCmBgYGphdmFzY3JpcHQKaW1wb3J0IHsgdXNlUXVlcnkgfSBmcm9tICdAdGFuc3RhY2svdnVlLXF1ZXJ5JwoKY29uc3QgeyBkYXRhLCBpc1BlbmRpbmcsIGlzRmV0Y2hpbmcsIGlzRXJyb3IsIGVycm9yIH0gPSB1c2VRdWVyeSh7CiAgcXVlcnlLZXk6IFsncG9zdHMnXSwKICBxdWVyeUZuOiBnZXRQb3N0cywKICBzdGFsZVRpbWU6IDEwMDAwLCAgIC8vbXMKfSkKYGBgCgotIGBpc1BlbmRpbmdgOiB0b2RhdsOtYSBubyBoYXkgZGF0b3MKLSBgaXNGZXRjaGluZ2A6IGhheSB1bmEgcGV0aWNpw7NuIGVuIGN1cnNvIChhdW5xdWUgeWEgaGF5YSBkYXRvcykKCgoKfHx8CgrinIUgKmxvYWRpbmcqLyplcnJvciogcmVhY3Rpdm9zCgrinIUgQ2FjaMOpIGNvbXBhcnRpZGEgcG9yIGBxdWVyeUtleWAKCuKchSBObyBkdXBsaWNhIHBldGljaW9uZXMKCuKchSAqUmVmZXRjaCogYXV0b23DoXRpY28gKGFsIHZvbHZlciBhIGxhIHBlc3Rhw7FhLCBhbCByZWNvbmVjdGFy4oCmKQoKW3RhbnN0YWNrLmNvbS9xdWVyeV0oaHR0cHM6Ly90YW5zdGFjay5jb20vcXVlcnkpIMK3IFBhcmEgVnVlLCBSZWFjdCwgU3ZlbHRlLCBTb2xpZCwgQW5ndWxhcgoKW0RlbW8gKm9ubGluZSpdKGh0dHBzOi8vc3RhY2tibGl0ei5jb20vZ2l0aHViL290dG9jb2wvZGVtby10YW5zdGFjayk=">
+<h2>TanStack Query</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);"><div class="col"><pre><code class="language-javascript">import { useQuery } from '@tanstack/vue-query'
+
+const { data, isPending, isFetching, isError, error } = useQuery({
+  queryKey: ['posts'],
+  queryFn: getPosts,
+  staleTime: 10000,   //ms
+})
+</code></pre>
+<ul>
+<li><code>isPending</code>: todavía no hay datos</li>
+<li><code>isFetching</code>: hay una petición en curso (aunque ya haya datos)</li>
+</ul></div><div class="col"><p>✅ <em>loading</em>/<em>error</em> reactivos</p>
+<p>✅ Caché compartida por <code>queryKey</code></p>
+<p>✅ No duplica peticiones</p>
+<p>✅ <em>Refetch</em> automático (al volver a la pestaña, al reconectar…)</p>
+<p><a href="https://tanstack.com/query">tanstack.com/query</a> · Para Vue, React, Svelte, Solid, Angular</p>
+<p><a href="https://stackblitz.com/github/ottocol/demo-tanstack">Demo <em>online</em></a></p></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">37 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-50-50" style="--colloquium-columns: minmax(0, 50fr) minmax(0, 50fr);" data-index="37" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy01MC01MCAtLT4KCiMjIExhIGNhY2jDqSBwb3IgYHF1ZXJ5S2V5YAoKLSBMYSBgcXVlcnlLZXlgIGVzIGVsICoqbm9tYnJlKiogZGVsIGRhdG8gZW4gbGEgY2FjaMOpCi0gRG9zIGNvbXBvbmVudGVzIGNvbiBsYSBtaXNtYSBjbGF2ZSDihpIgKip1bmEgc29sYSBwZXRpY2nDs24qKiB5IGxvcyBtaXNtb3MgZGF0b3MsIHNpbiBwcm9wcyBuaSAqc3RvcmUqCi0gU2kgZWwgZGF0byBkZXBlbmRlIGRlIHVuIHBhcsOhbWV0cm8sIGVsIHBhcsOhbWV0cm8gKip2YSBlbiBsYSBjbGF2ZSoqOiBjYWRhIHZhbG9yIGVzIHVuYSBlbnRyYWRhIGRpc3RpbnRhIGRlIGxhIGNhY2jDqQoKfHx8CgpgYGBqYXZhc2NyaXB0CmNvbnN0IHBhZ2UgPSByZWYoMSkKCmNvbnN0IHsgZGF0YSB9ID0gdXNlUXVlcnkoewogIC8vIHNpIGNhbWJpYSBwYWdlLCBjYW1iaWEgbGEgY2xhdmUKICBxdWVyeUtleTogWydwb3N0cycsICdwYWdlJywgcGFnZV0sCiAgcXVlcnlGbjogKCkgPT4gZ2V0UG9zdHNQYWdlKHBhZ2UudmFsdWUpLAogIC8vIG1pZW50cmFzIGxsZWdhIGxhIHDDoWdpbmEgbnVldmEsIG1vc3RyYXIgbGEgYW50ZXJpb3IKICBwbGFjZWhvbGRlckRhdGE6IGtlZXBQcmV2aW91c0RhdGEsCn0pCmBgYAoKPCEtLSBub3RlczogRXMgbGEgbWlzbWEgaWRlYSBxdWUgbGEgZnVlbnRlIGRlIHZlcmRhZCDDum5pY2EsIHBlcm8gcGFyYSBkYXRvcyBkZWwgc2Vydmlkb3IuIEVycm9yIHTDrXBpY286IHF1ZXJ5S2V5OiBbJ3Bvc3RzJ10geSBlbCBwYWdlIHNvbG8gZGVudHJvIGRlIHF1ZXJ5Rm4g4oaSIHRvZGFzIGxhcyBww6FnaW5hcyBzZSBtYWNoYWNhbiBlbiBsYSBtaXNtYSBlbnRyYWRhLiAtLT4=">
+<h2>La caché por <code>queryKey</code></h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 50fr) minmax(0, 50fr);"><div class="col"><ul>
+<li>La <code>queryKey</code> es el <strong>nombre</strong> del dato en la caché</li>
+<li>Dos componentes con la misma clave → <strong>una sola petición</strong> y los mismos datos, sin props ni <em>store</em></li>
+<li>Si el dato depende de un parámetro, el parámetro <strong>va en la clave</strong>: cada valor es una entrada distinta de la caché</li>
+</ul></div><div class="col"><pre><code class="language-javascript">const page = ref(1)
+
+const { data } = useQuery({
+  // si cambia page, cambia la clave
+  queryKey: ['posts', 'page', page],
+  queryFn: () =&gt; getPostsPage(page.value),
+  // mientras llega la página nueva, mostrar la anterior
+  placeholderData: keepPreviousData,
+})
+</code></pre></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">38 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-45-55" style="--colloquium-columns: minmax(0, 45fr) minmax(0, 55fr);" data-index="38" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy00NS01NSAtLT4KCiMjIE11dGFjaW9uZXMKCi0gUGFyYSAqKm1vZGlmaWNhcioqIGRhdG9zOiBgdXNlTXV0YXRpb25gCi0gRGVzcHXDqXMgaGF5IHF1ZSBhdmlzYXIgYSBsYSBjYWNow6kgZGUgcXVlIGhheSBkYXRvcyBkZXNmYXNhZG9zOiBzZSAqKmludmFsaWRhKiogbGEgY2xhdmUKLSBMYXMgcXVlcmllcyBjb24gZXNhIGNsYXZlIChvIHF1ZSAqKmVtcGllemFuKiogcG9yIGVsbGEpIHBhc2FuIGEgKnN0YWxlKiB5IGxhcyBxdWUgZXN0w6FuIGVuIHBhbnRhbGxhIHNlIHZ1ZWx2ZW4gYSBwZWRpcgoKfHx8CgpgYGBqYXZhc2NyaXB0CmNvbnN0IHFjID0gdXNlUXVlcnlDbGllbnQoKQoKY29uc3QgeyBtdXRhdGUgfSA9IHVzZU11dGF0aW9uKHsKICBtdXRhdGlvbkZuOiBsaWtlUG9zdCwKICBvblN1Y2Nlc3M6ICgpID0+IHFjLmludmFsaWRhdGVRdWVyaWVzKHsgcXVlcnlLZXk6IFsncG9zdHMnXSB9KSwKfSkKCm11dGF0ZShwb3N0LmlkKQpgYGAKCjwhLS0gbm90ZXM6IEFsIGRldm9sdmVyIGxhIHByb21lc2EgZGUgaW52YWxpZGF0ZVF1ZXJpZXMsIGxhIG11dGFjacOzbiBzaWd1ZSAicGVuZGluZyIgaGFzdGEgcXVlIGxsZWdhbiBsb3MgZGF0b3MgbnVldm9zLiBpbnZhbGlkYXRlUXVlcmllcyhbJ3Bvc3RzJ10pIHRhbWJpw6luIGludmFsaWRhIFsncG9zdHMnLCdwYWdlJywxXSwgZXRjLiAtLT4=">
+<h2>Mutaciones</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);"><div class="col"><ul>
+<li>Para <strong>modificar</strong> datos: <code>useMutation</code></li>
+<li>Después hay que avisar a la caché de que hay datos desfasados: se <strong>invalida</strong> la clave</li>
+<li>Las queries con esa clave (o que <strong>empiezan</strong> por ella) pasan a <em>stale</em> y las que están en pantalla se vuelven a pedir</li>
+</ul></div><div class="col"><pre><code class="language-javascript">const qc = useQueryClient()
+
+const { mutate } = useMutation({
+  mutationFn: likePost,
+  onSuccess: () =&gt; qc.invalidateQueries({ queryKey: ['posts'] }),
+})
+
+mutate(post.id)
+</code></pre></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">39 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content cols-45-55" style="--colloquium-code-size: 0.6em; --colloquium-columns: minmax(0, 45fr) minmax(0, 55fr);" data-index="39" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy00NS01NSAtLT4KCjwhLS0gc3R5bGU6IC0tY29sbG9xdWl1bS1jb2RlLXNpemU6IDAuNmVtIC0tPgoKIyMgQWN0dWFsaXphY2lvbmVzIG9wdGltaXN0YXMKCjEuIEFudGVzIGRlIGxhIHJlc3B1ZXN0YSwgc2UgKipjYW5jZWxhbioqIGxvcyAqcmVmZXRjaCogZW4gY3Vyc28geSBzZSBhY3R1YWxpemEgbGEgKipjYWNow6kgbG9jYWwqKjogbGEgaW50ZXJmYXogcGFyZWNlIGluc3RhbnTDoW5lYQoyLiBTaSBlbCBzZXJ2aWRvciBkYSBlcnJvciAoYG9uRXJyb3JgKSwgc2UgKipkZXNoYWNlKiogZWwgY2FtYmlvCjMuIEFsIHRlcm1pbmFyIChgb25TZXR0bGVkYCksIHNlICoqaW52YWxpZGEqKiBwYXJhIHF1ZWRhcnNlIGNvbiBsbyBxdWUgZGlnYSBlbCBzZXJ2aWRvciAocG9yIHNpIG90cm9zIGhhbiBjYW1iaWFkbyBhbGdvKQoKU29sbyBjb21wZW5zYSBjdWFuZG8gbGEgZXNwZXJhIHNlIG5vdGEgbXVjaG86IG9ibGlnYSBhIHJlcGV0aXIgZW4gZWwgY2xpZW50ZSBsYSBsw7NnaWNhIGRlbCBzZXJ2aWRvcgoKW2B1c2VMaWtlT3B0aW1pc3RhYCBlbiBlbCBlamVtcGxvXShodHRwczovL2dpdGh1Yi5jb20vb3R0b2NvbC9kZW1vLXRhbnN0YWNrL2Jsb2IvbWFpbi9zcmMvcXVlcmllcy9wb3N0cy5qcykKCnx8fAoKCgpgYGBqYXZhc2NyaXB0CnVzZU11dGF0aW9uKHsKICBtdXRhdGlvbkZuOiBsaWtlUG9zdCwKICBvbk11dGF0ZTogYXN5bmMgKGlkKSA9PiB7CiAgICBhd2FpdCBxYy5jYW5jZWxRdWVyaWVzKHsgcXVlcnlLZXk6IFsncG9zdHMnXSB9KQogICAgY29uc3QgYW50ZXJpb3IgPSBxYy5nZXRRdWVyeURhdGEoWydwb3N0cyddKQogICAgcWMuc2V0UXVlcnlEYXRhKFsncG9zdHMnXSwgKHBvc3RzKSA9PgogICAgICBwb3N0cy5tYXAocCA9PiBwLmlkID09PSBpZCA/IHsgLi4ucCwgbGlrZXM6IHAubGlrZXMgKyAxIH0gOiBwKSkKICAgIHJldHVybiB7IGFudGVyaW9yIH0KICB9LAogIG9uRXJyb3I6IChfZXJyb3IsIF9pZCwgY29udGV4dG8pID0+CiAgICBxYy5zZXRRdWVyeURhdGEoWydwb3N0cyddLCBjb250ZXh0by5hbnRlcmlvciksCiAgb25TZXR0bGVkOiAoKSA9PgogICAgcWMuaW52YWxpZGF0ZVF1ZXJpZXMoeyBxdWVyeUtleTogWydwb3N0cyddIH0pLAp9KQpgYGA=">
+<h2>Actualizaciones optimistas</h2>
+<div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);"><div class="col"><ol>
+<li>Antes de la respuesta, se <strong>cancelan</strong> los <em>refetch</em> en curso y se actualiza la <strong>caché local</strong>: la interfaz parece instantánea</li>
+<li>Si el servidor da error (<code>onError</code>), se <strong>deshace</strong> el cambio</li>
+<li>Al terminar (<code>onSettled</code>), se <strong>invalida</strong> para quedarse con lo que diga el servidor (por si otros han cambiado algo)</li>
+</ol>
+<p>Solo compensa cuando la espera se nota mucho: obliga a repetir en el cliente la lógica del servidor</p>
+<p><a href="https://github.com/ottocol/demo-tanstack/blob/main/src/queries/posts.js"><code>useLikeOptimista</code> en el ejemplo</a></p></div><div class="col"><pre><code class="language-javascript">useMutation({
+  mutationFn: likePost,
+  onMutate: async (id) =&gt; {
+    await qc.cancelQueries({ queryKey: ['posts'] })
+    const anterior = qc.getQueryData(['posts'])
+    qc.setQueryData(['posts'], (posts) =&gt;
+      posts.map(p =&gt; p.id === id ? { ...p, likes: p.likes + 1 } : p))
+    return { anterior }
+  },
+  onError: (_error, _id, contexto) =&gt;
+    qc.setQueryData(['posts'], contexto.anterior),
+  onSettled: () =&gt;
+    qc.invalidateQueries({ queryKey: ['posts'] }),
+})
+</code></pre></div></div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">40 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="40" data-chapter="3" data-colloquium-md="IyMgQWx0ZXJuYXRpdmFzIHkgZXh0cmFzCgotICoqW1BpbmlhIENvbGFkYV0oaHR0cHM6Ly9waW5pYS1jb2xhZGEuZXNtLmRldikqKjogbG8gbWlzbW8gcXVlIFRhblN0YWNrIFF1ZXJ5LCBwZW5zYWRvIHBhcmEgVnVlCi0gKipTV1IqKiAoUmVhY3QpLCAqKlJUSyBRdWVyeSoqIChSZWR1eCksICoqQXBvbGxvKiogKEdyYXBoUUwpCi0gKipUaWVtcG8gcmVhbCoqIChTdXBhYmFzZSBSZWFsdGltZSk6IGN1YW5kbyBsbGVnYSB1biBjYW1iaW8sIGFjdHVhbGl6YXIgbyBpbnZhbGlkYXIgbGEgY2FjaMOpIChgc2V0UXVlcnlEYXRhYCAvIGBpbnZhbGlkYXRlUXVlcmllc2Ap">
+<h2>Alternativas y extras</h2>
+<div class="slide-content"><ul>
+<li><strong><a href="https://pinia-colada.esm.dev">Pinia Colada</a></strong>: lo mismo que TanStack Query, pensado para Vue</li>
+<li><strong>SWR</strong> (React), <strong>RTK Query</strong> (Redux), <strong>Apollo</strong> (GraphQL)</li>
+<li><strong>Tiempo real</strong> (Supabase Realtime): cuando llega un cambio, actualizar o invalidar la caché (<code>setQueryData</code> / <code>invalidateQueries</code>)</li>
+</ul>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">41 / 45</span></div></div>
+</section>
+
+<section class="slide slide--section-break has-chapter-bar" data-index="41" data-chapter="4" data-chapter-start data-chapter-title="En resumen" data-colloquium-md="PCEtLSBsYXlvdXQ6IHNlY3Rpb24tYnJlYWsgLS0+Cgo8IS0tIGNoYXB0ZXI6IEVuIHJlc3VtZW4gLS0+CgojIyA4LjUgRW4gcmVzdW1lbg==">
+<h2>8.5 En resumen</h2>
+<nav class="colloquium-chapter-bar colloquium-chapter-bar--chapters" aria-label="Chapters"><a class="colloquium-chapter-bar-item done" href="#5" title="Qué es el estado" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Qué es</span></a><a class="colloquium-chapter-bar-item done" href="#10" title="Estado en el árbol" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">El árbol</span></a><a class="colloquium-chapter-bar-item done" href="#20" title="Estado global de cliente" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Store</span></a><a class="colloquium-chapter-bar-item done" href="#32" title="Estado del servidor" style="--chapter-progress: 100%"><span class="colloquium-chapter-bar-label">Servidor</span></a><a class="colloquium-chapter-bar-item current" href="#42" title="En resumen" style="--chapter-progress: 100%" aria-current="step"><span class="colloquium-chapter-bar-label">En resumen</span></a></nav>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">42 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="42" data-chapter="4" data-colloquium-md="IyMgw4FyYm9sIGRlIGRlY2lzacOzbgoKMS4gwr9TZSBwdWVkZSAqKmNhbGN1bGFyKio/IOKGkiBgY29tcHV0ZWRgOiBubyBlcyBlc3RhZG8KMi4gwr9WaWVuZSBkZWwgKipzZXJ2aWRvcioqPyDihpIgY2FjaMOpIGRlIHNlcnZpZG9yIChUYW5TdGFjayBRdWVyeSwgUGluaWEgQ29sYWRhKQozLiDCv0RlYmUgc29icmV2aXZpciBhIHVuYSByZWNhcmdhIG8gKipjb21wYXJ0aXJzZSBwb3IgZW5sYWNlKio/IOKGkiBVUkwgLyBsb2NhbFN0b3JhZ2UKNC4gwr9MbyB1c2EgKip1biBzb2xvKiogY29tcG9uZW50ZT8g4oaSIGVzdGFkbyBsb2NhbAo1LiDCv0xvIHVzYW4gKip1bm9zIHBvY29zIGNlcmNhbm9zKio/IOKGkiBhbmNlc3RybyBjb23Dum4gbcOhcyBjZXJjYW5vCjYuIMK/TG8gdXNhbiAqKmRlc2NlbmRpZW50ZXMgbGVqYW5vcyoqIGRlIHVuIG1pc21vIGNvbXBvbmVudGU/IOKGkiBwcm92aWRlL2luamVjdAo3LiDCv0xvIHVzYSAqKnRvZGEgbGEgYXBwKio/IOKGkiAqc3RvcmUqIChQaW5pYSk=">
+<h2>Árbol de decisión</h2>
+<div class="slide-content"><ol>
+<li>¿Se puede <strong>calcular</strong>? → <code>computed</code>: no es estado</li>
+<li>¿Viene del <strong>servidor</strong>? → caché de servidor (TanStack Query, Pinia Colada)</li>
+<li>¿Debe sobrevivir a una recarga o <strong>compartirse por enlace</strong>? → URL / localStorage</li>
+<li>¿Lo usa <strong>un solo</strong> componente? → estado local</li>
+<li>¿Lo usan <strong>unos pocos cercanos</strong>? → ancestro común más cercano</li>
+<li>¿Lo usan <strong>descendientes lejanos</strong> de un mismo componente? → provide/inject</li>
+<li>¿Lo usa <strong>toda la app</strong>? → <em>store</em> (Pinia)</li>
+</ol>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">43 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="43" data-chapter="4" data-colloquium-md="IyMgQWN0aXZpZGFkOiBkaXNlw7FhZCBlbCBlc3RhZG8KCkxpc3RhIGRlIGxhIGNvbXByYSAqKmNvbGFib3JhdGl2YSoqIGNvbjoKCi0gUGFuZWwgY29uIGVsIHVzdWFyaW8geSBzdSBhdmF0YXIKLSBMaXN0YSBkZSBpdGVtcyBjb21wYXJ0aWRhIHBvciBsYSBmYW1pbGlhCi0gRmlsdHJvICJzb2xvIHBlbmRpZW50ZXMiCi0gQ29udGFkb3IgZGUgcGVuZGllbnRlcwotIE1vZGFsIHBhcmEgZWRpdGFyIHVuIGl0ZW0KLSBUZW1hIGNsYXJvL29zY3VybwoKUG9yIHBhcmVqYXM6ICoqwr9kw7NuZGUgdml2ZSBjYWRhIGRhdG8/KioKCjwhLS0gbm90ZXM6IFNvbHVjacOzbiBvcmllbnRhdGl2YTogdXN1YXJpbyDihpIgcHJvdmlkZS9pbmplY3QgbyBzdG9yZSAoeSBTdXBhYmFzZSBhdXRoKTsgaXRlbXMg4oaSIGNhY2jDqSBkZSBzZXJ2aWRvcjsgZmlsdHJvIOKGkiBVUkwgKD9wZW5kaWVudGVzPTEpIG8gZXN0YWRvIGxvY2FsIGRlIExpc3RhQ29tcHJhOyBjb250YWRvciDihpIgY29tcHV0ZWQ7IG1vZGFsIHkgc3UgaXRlbSBlbiBlZGljacOzbiDihpIgZXN0YWRvIGxvY2FsOyB0ZW1hIOKGkiBzdG9yZSArIGxvY2FsU3RvcmFnZS4gQnVnczogMSDihpIgZGVyaXZhciBjb24gY29tcHV0ZWQ7IDIg4oaSIHNlcnZlciBzdGF0ZSBjb24gbXV0YWNpw7NuICsgaW52YWxpZGFjacOzbjsgMyDihpIgcmVmZXRjaCBhbCB2b2x2ZXIgYSBsYSBwZXN0YcOxYSBvIFN1cGFiYXNlIFJlYWx0aW1lLiAtLT4=">
+<h2>Actividad: diseñad el estado</h2>
+<div class="slide-content"><p>Lista de la compra <strong>colaborativa</strong> con:</p>
+<ul>
+<li>Panel con el usuario y su avatar</li>
+<li>Lista de items compartida por la familia</li>
+<li>Filtro “solo pendientes”</li>
+<li>Contador de pendientes</li>
+<li>Modal para editar un item</li>
+<li>Tema claro/oscuro</li>
+</ul>
+<p>Por parejas: <strong>¿dónde vive cada dato?</strong></p>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">44 / 45</span></div></div>
+</section>
+
+<section class="slide slide--content" data-index="44" data-chapter="4" data-colloquium-md="IyMgUmVzdW1lbgoKLSBFbCBlc3RhZG8gc29uIGxvcyBkYXRvcyAqKm5vIGRlcml2YWJsZXMqKjsgbG8gZGVyaXZhZG8gc2UgY2FsY3VsYQotIEhheSAqKnRpcG9zKiogZGUgZXN0YWRvIHkgY2FkYSB1bm8gdGllbmUgc3Ugc2l0aW8KLSBFbiBlbCDDoXJib2w6ICoqYW5jZXN0cm8gY29tw7puIG3DoXMgY2VyY2FubyoqLCBmbHVqbyB1bmlkaXJlY2Npb25hbCwgcHJvdmlkZS9pbmplY3QgcGFyYSBzYWx0YXIgbml2ZWxlcwotICpTdG9yZSogZ2xvYmFsIHNvbG8gY3VhbmRvIGRlIHZlcmRhZCBoYWNlIGZhbHRhOyBQaW5pYSA9IHJlYWN0aXZpZGFkICsgY29udmVuY2nDs24KLSBMb3MgZGF0b3MgZGVsIHNlcnZpZG9yIHNvbiB1bmEgKipjYWNow6kqKjogbWVqb3IgdW5hIGxpYnJlcsOtYSBxdWUgaGFjZXJsbyBhIG1hbm8=">
+<h2>Resumen</h2>
+<div class="slide-content"><ul>
+<li>El estado son los datos <strong>no derivables</strong>; lo derivado se calcula</li>
+<li>Hay <strong>tipos</strong> de estado y cada uno tiene su sitio</li>
+<li>En el árbol: <strong>ancestro común más cercano</strong>, flujo unidireccional, provide/inject para saltar niveles</li>
+<li><em>Store</em> global solo cuando de verdad hace falta; Pinia = reactividad + convención</li>
+<li>Los datos del servidor son una <strong>caché</strong>: mejor una librería que hacerlo a mano</li>
+</ul>
+</div>
+<div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">45 / 45</span></div></div>
+</section>
+</div>
+
+<button class="colloquium-present" title="Present (F)">&#9654;</button>
+
+<button class="colloquium-picker-trigger" title="Open slide picker">
+    <span class="colloquium-picker-trigger-label">Slides</span>
+    <span class="colloquium-picker-trigger-count">1 / 45</span>
+</button>
+
+<div class="colloquium-progress">
+    <div class="colloquium-progress-bar" style="width: 0%"></div>
+</div>
+
+<script>
+/**
+ * Colloquium Presentation Engine
+ * 16:9 scaled canvas, keyboard/click/touch navigation, hash routing, fullscreen
+ * Slide picker (grouped by chapter) + per-slide footer
+ */
+class ColloquiumPresentation {
+    constructor() {
+        this.deck = document.querySelector('.colloquium-deck');
+        this.slides = Array.from(document.querySelectorAll('.slide'));
+        this.currentIndex = 0;
+        this.totalSlides = this.slides.length;
+        this.chapters = this._readChapters();
+        this._iframeKeyboardRelayDocuments = new WeakSet();
+        this.slideNumberBuffer = '';
+        this.slideNumberTimer = null;
+        this.slideNumberCommitDelay = 700;
+
+        if (this._isEmbedded()) {
+            document.body.classList.add('colloquium-embedded');
+        }
+
+        // Fragment state: current revealed fragment index per slide (0 = none)
+        this.fragmentStates = this.slides.map(() => 0);
+        this.fragmentCounts = this.slides.map(
+            s => parseInt(s.getAttribute('data-fragment-count') || '0', 10)
+        );
+
+        // Reference dimensions (16:9)
+        this.width = 1280;
+        this.height = 720;
+
+        // Capture mode — hide UI chrome for headless screenshots
+        if (new URLSearchParams(location.search).has('capture')) {
+            document.body.classList.add('colloquium-capture');
+        }
+
+        if (this.totalSlides === 0) return;
+
+        this.deck.setAttribute('tabindex', '-1');
+        this.progressBar = document.querySelector('.colloquium-progress-bar');
+        this.pickerTrigger = document.querySelector('.colloquium-picker-trigger');
+        this.pickerTriggerCount = this.pickerTrigger
+            ? this.pickerTrigger.querySelector('.colloquium-picker-trigger-count')
+            : null;
+        this.pickerOpen = false;
+
+        // Presenter tools: magnifier (Alt+click) and live text scale (+/-)
+        this.zoom = null;
+        this.fontScaleKey = 'colloquium-font-scale:' + location.pathname;
+        this.fontScale = this._loadFontScale();
+        this._applyFontScale(false);
+
+        this._scaleDeck();
+        window.addEventListener('resize', () => this._scaleDeck());
+        this._bindMagnifier();
+
+        this._createPicker();
+        this._bindFooter();
+        this._bindPickerTrigger();
+        this._bindPresent();
+        this._bindKeyboard();
+        this._bindIframes();
+        this._bindClick();
+        this._bindTouch();
+        this._bindHashChange();
+
+        // Navigate to hash or first slide
+        const hash = parseInt(location.hash.replace('#', ''), 10);
+        if (hash >= 1 && hash <= this.totalSlides) {
+            this.goTo(hash - 1);
+        } else {
+            this.goTo(0);
+        }
+    }
+
+    _isEmbedded() {
+        try {
+            return window.self !== window.top;
+        } catch (_) {
+            return true;
+        }
+    }
+
+    /**
+     * Check each slide for content overflow and add a visual warning.
+     * Temporarily shows all slides to measure, then restores.
+     */
+    _checkOverflow() {
+        const origDisplay = this.slides.map(s => s.style.display);
+        this.slides.forEach(s => s.style.display = 'flex');
+
+        this.slides.forEach((slide, i) => {
+            if (slide.scrollHeight > slide.clientHeight + 2) {
+                const warn = document.createElement('div');
+                warn.className = 'colloquium-overflow-warn';
+                warn.title = `Slide ${i + 1} content overflows`;
+                slide.appendChild(warn);
+            }
+        });
+
+        this.slides.forEach((s, i) => s.style.display = origDisplay[i]);
+    }
+
+    /**
+     * Scale the 1280x720 deck to fit the viewport while maintaining 16:9 aspect ratio.
+     * Centers the deck with black letterbox/pillarbox bars.
+     */
+    _scaleDeck() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const scale = Math.min(vw / this.width, vh / this.height);
+
+        const scaledW = this.width * scale;
+        const scaledH = this.height * scale;
+        const offsetX = (vw - scaledW) / 2;
+        const offsetY = (vh - scaledH) / 2;
+
+        this.baseTransform = { x: offsetX, y: offsetY, scale };
+        this.zoom = null;
+        document.body.classList.remove('colloquium-zoomed');
+        this.deck.classList.remove('colloquium-zoom-anim');
+        this.deck.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+        if (window.colloquiumFitCaptionedFiguresIn) {
+            requestAnimationFrame(() => {
+                window.colloquiumFitCaptionedFiguresIn(this.slides[this.currentIndex]);
+            });
+        }
+    }
+
+    goTo(index, showAllFragments = false) {
+        if (index < 0 || index >= this.totalSlides) return;
+
+        // Cancel any pending numeric jump. The numeric commit path clears the
+        // buffer before calling goTo, so this is a no-op there; every other
+        // navigation path (click, touch, hash, picker, arrows) cancels a stale
+        // digit that would otherwise fire later and snap the deck unexpectedly.
+        this._clearSlideNumberBuffer();
+
+        if (this.zoom) this._zoomOut();
+        this.slides[this.currentIndex].classList.remove('active');
+        this.currentIndex = index;
+        this.slides[this.currentIndex].classList.add('active');
+
+        // Set fragment state
+        if (showAllFragments) {
+            this.fragmentStates[index] = this.fragmentCounts[index];
+        } else {
+            this.fragmentStates[index] = 0;
+        }
+        this._updateFragments(index);
+
+        if (window.colloquiumFitDisplayMathIn) {
+            requestAnimationFrame(() => {
+                window.colloquiumFitDisplayMathIn(this.slides[this.currentIndex]);
+            });
+        }
+        if (window.colloquiumFitCaptionedFiguresIn) {
+            requestAnimationFrame(() => {
+                window.colloquiumFitCaptionedFiguresIn(this.slides[this.currentIndex]);
+            });
+        }
+
+        // Update hash
+        history.replaceState(null, '', '#' + (this.currentIndex + 1));
+
+        // Update progress bar
+        if (this.progressBar) {
+            const progress = this.totalSlides > 1
+                ? (this.currentIndex / (this.totalSlides - 1)) * 100
+                : 100;
+            this.progressBar.style.width = progress + '%';
+        }
+
+        this._updatePickerTrigger();
+        if (this.pickerOpen) this._syncPicker();
+    }
+
+    next() {
+        // Fragment steps bypass goTo, so cancel any pending numeric jump here
+        // too (click/swipe advancing a fragment must not let a stale digit fire).
+        this._clearSlideNumberBuffer();
+        const fc = this.fragmentCounts[this.currentIndex];
+        const fs = this.fragmentStates[this.currentIndex];
+        if (fc > 0 && fs < fc) {
+            this.fragmentStates[this.currentIndex] = fs + 1;
+            this._updateFragments(this.currentIndex);
+        } else {
+            this.goTo(this.currentIndex + 1);
+        }
+    }
+
+    prev() {
+        this._clearSlideNumberBuffer();
+        const fs = this.fragmentStates[this.currentIndex];
+        if (fs > 0) {
+            this.fragmentStates[this.currentIndex] = fs - 1;
+            this._updateFragments(this.currentIndex);
+        } else {
+            this.goTo(this.currentIndex - 1, true);
+        }
+    }
+
+    // Jump-style navigation lands with all fragments revealed: jumping means
+    // skimming or referencing finished content, not presenting the build-up.
+    // Only Right/Left (next/prev) step through fragments.
+    nextSlide() {
+        this.goTo(this.currentIndex + 1, true);
+    }
+
+    prevSlide() {
+        this.goTo(this.currentIndex - 1, true);
+    }
+
+    first() {
+        this.goTo(0);
+    }
+
+    last() {
+        this.goTo(this.totalSlides - 1, true);
+    }
+
+    // --- Numeric Slide Jump ---
+
+    _handleSlideNumberKey(e) {
+        if (e.metaKey || e.ctrlKey || e.altKey) return false;
+
+        if (/^\d$/.test(e.key)) {
+            e.preventDefault();
+            this._appendSlideNumberDigit(e.key);
+            return true;
+        }
+
+        if (!this.slideNumberBuffer) return false;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this._commitSlideNumberBuffer();
+            return true;
+        }
+
+        if (e.key === 'Backspace') {
+            e.preventDefault();
+            this._removeSlideNumberDigit();
+            return true;
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            this._clearSlideNumberBuffer();
+            return true;
+        }
+
+        this._clearSlideNumberBuffer();
+        return false;
+    }
+
+    _appendSlideNumberDigit(digit) {
+        this.slideNumberBuffer += digit;
+        clearTimeout(this.slideNumberTimer);
+
+        const maxDigits = String(this.totalSlides).length;
+        if (this.slideNumberBuffer.length >= maxDigits) {
+            this._commitSlideNumberBuffer();
+            return;
+        }
+
+        this.slideNumberTimer = setTimeout(() => {
+            this._commitSlideNumberBuffer();
+        }, this.slideNumberCommitDelay);
+    }
+
+    _removeSlideNumberDigit() {
+        this.slideNumberBuffer = this.slideNumberBuffer.slice(0, -1);
+        clearTimeout(this.slideNumberTimer);
+
+        if (this.slideNumberBuffer) {
+            this.slideNumberTimer = setTimeout(() => {
+                this._commitSlideNumberBuffer();
+            }, this.slideNumberCommitDelay);
+        }
+    }
+
+    _commitSlideNumberBuffer() {
+        if (!this.slideNumberBuffer) return;
+
+        const slideNumber = parseInt(this.slideNumberBuffer, 10);
+        this._clearSlideNumberBuffer();
+
+        if (slideNumber >= 1 && slideNumber <= this.totalSlides) {
+            if (this.pickerOpen) this._closePicker();
+            this.goTo(slideNumber - 1, true);
+        } else {
+            this._showToast('No slide ' + slideNumber);
+        }
+    }
+
+    _clearSlideNumberBuffer() {
+        this.slideNumberBuffer = '';
+        clearTimeout(this.slideNumberTimer);
+        this.slideNumberTimer = null;
+    }
+
+    // --- Fragment Management ---
+
+    _updateFragments(slideIndex) {
+        const slide = this.slides[slideIndex];
+        const currentStep = this.fragmentStates[slideIndex];
+        const fragments = slide.querySelectorAll('[data-fragment-index]');
+        fragments.forEach(el => {
+            const idx = parseInt(el.getAttribute('data-fragment-index'), 10);
+            el.classList.toggle('visible', idx <= currentStep);
+        });
+    }
+
+    // --- Slide Picker ---
+
+    _headingText(heading) {
+        // Multi-line titles break with <br>; read them as one line.
+        return Array.from(heading.childNodes)
+            .map((node) => node.nodeName === 'BR' ? ' ' : node.textContent)
+            .join('').replace(/\s+/g, ' ').trim();
+    }
+
+    _getSlideTitle(slide, i) {
+        const h1 = slide.querySelector('h1');
+        if (h1) return this._headingText(h1);
+        const h2 = slide.querySelector('h2');
+        if (h2) return this._headingText(h2);
+        const img = slide.querySelector('img[alt]');
+        if (img && img.alt) return img.alt;
+        const text = slide.textContent.trim();
+        if (text) return text.substring(0, 50) + (text.length > 50 ? '…' : '');
+        return 'Slide ' + (i + 1);
+    }
+
+    // --- Chapters ---
+
+    // Chapters come from data-chapter attributes written at build time:
+    // [{ title, start, end }] with inclusive 0-based slide indices.
+    _readChapters() {
+        const chapters = [];
+        this.slides.forEach((slide, i) => {
+            const chapterIndex = this._chapterOf(slide);
+            if (chapterIndex < 0) return;
+            if (!chapters[chapterIndex]) {
+                chapters[chapterIndex] = {
+                    title: slide.getAttribute('data-chapter-title') || this._getSlideTitle(slide, i),
+                    start: i,
+                    end: i,
+                };
+            }
+            chapters[chapterIndex].end = i;
+        });
+        return chapters;
+    }
+
+    _chapterOf(slide) {
+        const value = slide.getAttribute('data-chapter');
+        return value === null ? -1 : parseInt(value, 10);
+    }
+
+    _createPicker() {
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'colloquium-picker-overlay';
+
+        const picker = document.createElement('div');
+        picker.className = 'colloquium-picker';
+
+        this.pickerItems = [];
+        this.pickerChapters = [];
+
+        this.slides.forEach((slide, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'colloquium-picker-item';
+            btn.innerHTML =
+                '<span class="colloquium-picker-num">' + (i + 1) + '</span>' +
+                '<span class="colloquium-picker-title">' + this._getSlideTitle(slide, i) + '</span>';
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.goTo(i, true);
+                this._closePicker();
+            });
+            this.pickerItems.push(btn);
+
+            const chapterIndex = this._chapterOf(slide);
+            if (chapterIndex < 0) {
+                picker.appendChild(btn);
+                return;
+            }
+            if (!this.pickerChapters[chapterIndex]) {
+                this.pickerChapters[chapterIndex] = this._createPickerChapter(chapterIndex);
+                picker.appendChild(this.pickerChapters[chapterIndex].group);
+            }
+            this.pickerChapters[chapterIndex].list.appendChild(btn);
+        });
+
+        this.overlay.appendChild(picker);
+        document.body.appendChild(this.overlay);
+
+        // Close on click outside the picker card
+        this.overlay.addEventListener('click', (e) => {
+            if (e.target === this.overlay) {
+                this._closePicker();
+            }
+        });
+    }
+
+    _createPickerChapter(chapterIndex) {
+        const chapter = this.chapters[chapterIndex];
+        const group = document.createElement('div');
+        group.className = 'colloquium-picker-chapter';
+
+        const header = document.createElement('button');
+        header.className = 'colloquium-picker-chapter-header';
+        header.setAttribute('aria-expanded', 'false');
+
+        const toggle = document.createElement('span');
+        toggle.className = 'colloquium-picker-chapter-toggle';
+        toggle.setAttribute('aria-hidden', 'true');
+        const title = document.createElement('span');
+        title.className = 'colloquium-picker-title';
+        title.textContent = chapter.title;
+        const range = document.createElement('span');
+        range.className = 'colloquium-picker-chapter-range';
+        range.textContent = chapter.start === chapter.end
+            ? String(chapter.start + 1)
+            : (chapter.start + 1) + '–' + (chapter.end + 1);
+        header.append(toggle, title, range);
+
+        const list = document.createElement('div');
+        list.className = 'colloquium-picker-chapter-slides';
+
+        header.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this._setPickerChapterExpanded(chapterIndex, !group.classList.contains('expanded'));
+        });
+
+        group.append(header, list);
+        return { group, header, list };
+    }
+
+    _setPickerChapterExpanded(chapterIndex, expanded) {
+        const entry = this.pickerChapters[chapterIndex];
+        if (!entry) return;
+        entry.group.classList.toggle('expanded', expanded);
+        entry.header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    _openPicker() {
+        // Opening the picker cancels a pending numeric jump — otherwise the
+        // stale timer fires mid-browse, closing the picker and jumping away.
+        this._clearSlideNumberBuffer();
+
+        this.overlay.classList.add('active');
+        this.pickerOpen = true;
+        this._syncPicker();
+    }
+
+    // Highlight the current slide, expand only its chapter, and scroll it into
+    // view. Runs on open and after every navigation while the picker is open,
+    // since keyboard navigation stays live behind it.
+    _syncPicker() {
+        this.pickerItems.forEach((btn, i) => {
+            btn.classList.toggle('current', i === this.currentIndex);
+        });
+
+        const currentChapter = this._chapterOf(this.slides[this.currentIndex]);
+        this.pickerChapters.forEach((entry, chapterIndex) => {
+            this._setPickerChapterExpanded(chapterIndex, chapterIndex === currentChapter);
+            entry.header.classList.toggle('current', chapterIndex === currentChapter);
+        });
+
+        const current = this.pickerItems[this.currentIndex];
+        if (current) {
+            current.scrollIntoView({ block: 'center' });
+        }
+    }
+
+    _closePicker() {
+        // Dismissing the picker also cancels a pending numeric jump (the
+        // commit path clears its buffer before closing, so this is a no-op
+        // there).
+        this._clearSlideNumberBuffer();
+        this.overlay.classList.remove('active');
+        this.pickerOpen = false;
+    }
+
+    _togglePicker() {
+        if (this.pickerOpen) {
+            this._closePicker();
+        } else {
+            this._openPicker();
+        }
+    }
+
+    _updatePickerTrigger() {
+        if (!this.pickerTriggerCount) return;
+        this.pickerTriggerCount.textContent = (this.currentIndex + 1) + ' / ' + this.totalSlides;
+    }
+
+    _bindFooter() {
+        // The entire right footer zone is the picker trigger.
+        document.querySelectorAll('.colloquium-footer-nav').forEach((target) => {
+            target.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._togglePicker();
+            });
+        });
+    }
+
+    _bindPickerTrigger() {
+        if (!this.pickerTrigger) return;
+        this.pickerTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this._togglePicker();
+        });
+    }
+
+    _bindPresent() {
+        const btn = document.querySelector('.colloquium-present');
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._toggleFullscreen();
+            });
+        }
+    }
+
+
+    // --- Presenter tools: live text scale ---
+
+    _loadFontScale() {
+        try {
+            const v = parseFloat(localStorage.getItem(this.fontScaleKey));
+            if (v >= 0.5 && v <= 2) return v;
+        } catch (_) { /* storage unavailable */ }
+        return 1;
+    }
+
+    _saveFontScale() {
+        try {
+            if (this.fontScale === 1) localStorage.removeItem(this.fontScaleKey);
+            else localStorage.setItem(this.fontScaleKey, String(this.fontScale));
+        } catch (_) { /* storage unavailable */ }
+    }
+
+    /**
+     * +/- (or Ctrl/Cmd with +, - and 0, which would otherwise be a browser
+     * zoom that the scaled canvas cancels out) change the size of the text.
+     * Unlike browser zoom, the text reflows inside the 1280x720 slide.
+     */
+    _handleFontScaleKey(e) {
+        if (e.altKey) return false;
+        const mod = e.ctrlKey || e.metaKey;
+        let step = 0;
+        let reset = false;
+        if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') step = 1;
+        else if (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract') step = -1;
+        else if (mod && (e.key === '0' || e.code === 'Numpad0')) reset = true;
+        else if (!mod && (e.key === 'r' || e.key === 'R') && this.fontScale !== 1) reset = true;
+        else return false;
+
+        e.preventDefault();
+        if (reset) {
+            this.fontScale = 1;
+        } else {
+            const next = Math.round((this.fontScale + step * 0.1) * 10) / 10;
+            this.fontScale = Math.min(1.8, Math.max(0.6, next));
+        }
+        this._applyFontScale(true);
+        this._saveFontScale();
+        return true;
+    }
+
+    _applyFontScale(announce) {
+        document.documentElement.style.setProperty('--colloquium-font-scale', String(this.fontScale));
+        if (!announce) return;
+        requestAnimationFrame(() => {
+            if (window.colloquiumFitCaptionedFiguresIn) {
+                window.colloquiumFitCaptionedFiguresIn(this.slides[this.currentIndex]);
+            }
+            const pct = Math.round(this.fontScale * 100);
+            const hint = this.fontScale === 1 ? '' : ' · R para restablecer';
+            const warn = this._currentSlideOverflows()
+                ? '<span class="colloquium-toast-warn">⚠ el contenido se sale de esta traspa</span>'
+                : '';
+            this._toast(`Texto ${pct} %${hint}${warn}`);
+        });
+    }
+
+    _currentSlideOverflows() {
+        const slide = this.slides[this.currentIndex];
+        if (!slide) return false;
+        const box = slide.getBoundingClientRect();
+        const scale = this.baseTransform ? this.baseTransform.scale : 1;
+        const tolerance = 2 * scale;
+        // The footer/chapter bar sit inside the slide; only real content counts
+        const content = slide.querySelectorAll('.slide-content *, .slide-title, h1, h2');
+        for (const el of content) {
+            const r = el.getBoundingClientRect();
+            if (!r.width && !r.height) continue;
+            if (r.bottom > box.bottom + tolerance || r.right > box.right + tolerance) return true;
+        }
+        const pre = slide.querySelectorAll('pre');
+        for (const p of pre) {
+            if (p.scrollHeight > p.clientHeight + 2) return true;
+        }
+        return false;
+    }
+
+    _toast(html) {
+        if (!this.toastEl) {
+            this.toastEl = document.createElement('div');
+            this.toastEl.className = 'colloquium-toast';
+            this.toastEl.setAttribute('role', 'status');
+            document.body.appendChild(this.toastEl);
+        }
+        this.toastEl.innerHTML = html;
+        this.toastEl.classList.add('visible');
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => this.toastEl.classList.remove('visible'), 1800);
+    }
+
+    // --- Presenter tools: magnifier ---
+
+    /**
+     * Alt+click (Option+click on a Mac) magnifies the slide around the click
+     * point; any click, Esc or changing slide zooms back out. Runs in the
+     * capture phase so it wins over click-to-navigate.
+     */
+    _bindMagnifier() {
+        window.addEventListener('click', (e) => {
+            if (this.zoom) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                this._zoomOut();
+                return;
+            }
+            if (!e.altKey) return;
+            if (e.target.closest('.colloquium-picker-overlay, .colloquium-footer')) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            this._zoomIn(e.clientX, e.clientY, 2.5);
+        }, true);
+    }
+
+    _zoomIn(clientX, clientY, factor) {
+        const b = this.baseTransform;
+        if (!b) return;
+        // Point under the cursor, in slide (1280x720) coordinates
+        const px = (clientX - b.x) / b.scale;
+        const py = (clientY - b.y) / b.scale;
+        const scale = b.scale * factor;
+        // Keep that point under the cursor, but never show beyond the slide edges
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let x = clientX - px * scale;
+        let y = clientY - py * scale;
+        x = Math.min(Math.max(x, vw - this.width * scale - Math.max(0, b.x)), Math.max(0, b.x));
+        y = Math.min(Math.max(y, vh - this.height * scale - Math.max(0, b.y)), Math.max(0, b.y));
+        this.zoom = { x, y, scale };
+        this.deck.classList.add('colloquium-zoom-anim');
+        this.deck.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+        document.body.classList.add('colloquium-zoomed');
+    }
+
+    _zoomOut() {
+        const b = this.baseTransform;
+        this.zoom = null;
+        document.body.classList.remove('colloquium-zoomed');
+        if (!b) return;
+        this.deck.classList.add('colloquium-zoom-anim');
+        this.deck.style.transform = `translate(${b.x}px, ${b.y}px) scale(${b.scale})`;
+    }
+
+    // --- Navigation Bindings ---
+
+    _bindKeyboard() {
+        document.addEventListener('keydown', (e) => {
+            if (this._isTextInputTarget(e.target)) return;
+            this._handleNavigationKey(e);
+        });
+    }
+
+    _isTextInputTarget(target) {
+        if (!target || !target.tagName) return false;
+        if (target.isContentEditable) return true;
+        return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+    }
+
+    _handleNavigationKey(e) {
+        if (this._handleFontScaleKey(e)) return;
+        if (this._handleSlideNumberKey(e)) return;
+
+        switch (e.key) {
+            // Left/Right (and Space/PageDown) step through fragments then
+            // slides — the familiar PowerPoint/Keynote "advance" axis.
+            case 'ArrowRight':
+            case ' ':
+            case 'PageDown':
+                e.preventDefault();
+                this.next();
+                break;
+            case 'ArrowLeft':
+            case 'PageUp':
+                e.preventDefault();
+                this.prev();
+                break;
+            // Up/Down jump whole slides, skipping fragments — a fast axis for
+            // moving past fragment-heavy slides.
+            case 'ArrowDown':
+                e.preventDefault();
+                this.nextSlide();
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.prevSlide();
+                break;
+            case 'Home':
+                e.preventDefault();
+                this.first();
+                break;
+            case 'End':
+                e.preventDefault();
+                this.last();
+                break;
+            case 'c':
+            case 'C':
+                // Plain 'c' copies the current slide's markdown source.
+                // Leave Cmd/Ctrl+C alone so the browser can copy selected text.
+                if (e.metaKey || e.ctrlKey || e.altKey) return;
+                e.preventDefault();
+                this._copyCurrentSlideMarkdown();
+                break;
+            case 'f':
+            case 'F':
+                e.preventDefault();
+                this._toggleFullscreen();
+                break;
+            case 'Escape':
+                if (this.zoom) {
+                    this._zoomOut();
+                } else if (this.pickerOpen) {
+                    this._closePicker();
+                } else if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+                break;
+        }
+    }
+
+    _bindIframes() {
+        document.querySelectorAll('iframe.colloquium-iframe').forEach((iframe) => {
+            this._bindIframeKeyboardRelay(iframe);
+            iframe.addEventListener('load', () => this._bindIframeKeyboardRelay(iframe));
+            iframe.addEventListener('focus', () => this._recoverFocusFromIframe(iframe));
+        });
+    }
+
+    _bindIframeKeyboardRelay(iframe) {
+        if (iframe.dataset.colloquiumPreserveKeyboard === 'false') return false;
+
+        try {
+            const iframeDocument = iframe.contentWindow && iframe.contentWindow.document;
+            if (!iframeDocument) return false;
+            if (this._iframeKeyboardRelayDocuments.has(iframeDocument)) return true;
+
+            iframeDocument.addEventListener('keydown', (e) => {
+                if (this._isTextInputTarget(e.target)) return;
+                this._handleNavigationKey(e);
+            });
+            this._iframeKeyboardRelayDocuments.add(iframeDocument);
+            return true;
+        } catch (_) {
+            // Cross-origin frames cannot expose their keyboard events to the parent deck.
+            return false;
+        }
+    }
+
+    _recoverFocusFromIframe(iframe) {
+        if (iframe.dataset.colloquiumPreserveKeyboard === 'false') return;
+        if (this._bindIframeKeyboardRelay(iframe)) return;
+
+        setTimeout(() => {
+            if (document.activeElement === iframe) {
+                iframe.blur();
+                window.focus();
+                this.deck.focus({ preventScroll: true });
+            }
+        }, 0);
+    }
+
+    _bindClick() {
+        // Track the pointer-down position so we can tell a click from a drag.
+        // A drag (mouse moved between down and up) means the user was selecting
+        // text or otherwise interacting, not trying to advance the slide.
+        let downX = 0;
+        let downY = 0;
+        const DRAG_THRESHOLD = 8; // px of movement that counts as a drag, not a click
+        document.addEventListener('mousedown', (e) => {
+            downX = e.clientX;
+            downY = e.clientY;
+        });
+
+        document.addEventListener('click', (e) => {
+            // Handle citation links — navigate to the slide containing the target ref
+            const citeLink = e.target.closest('a.colloquium-cite');
+            if (citeLink) {
+                e.preventDefault();
+                e.stopPropagation();
+                const href = citeLink.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(href.slice(1));
+                    if (target) {
+                        const slide = target.closest('.slide');
+                        if (slide) {
+                            const idx = this.slides.indexOf(slide);
+                            if (idx >= 0) this.goTo(idx);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Ignore clicks on links, interactive elements, footer, and picker
+            if (e.target.closest('a, button, input, textarea, select, .colloquium-footer, .colloquium-picker-overlay, .colloquium-present, .colloquium-picker-trigger')) return;
+
+            // Don't navigate if the user is highlighting/copying text. A drag
+            // (pointer moved between down and up) or a live text selection both
+            // mean "select", not "next slide".
+            const dragDistance = Math.hypot(e.clientX - downX, e.clientY - downY);
+            if (dragDistance > DRAG_THRESHOLD) return;
+            // A multi-click (double/triple) is a word/paragraph selection gesture,
+            // not navigation. This catches the later clicks of a multi-click; the
+            // very first click can't be distinguished without deferring all
+            // navigation, which we avoid so slide clicks stay snappy.
+            if (e.detail > 1) return;
+            const selection = window.getSelection();
+            if (selection && !selection.isCollapsed && selection.toString().trim()) return;
+
+            const x = e.clientX / window.innerWidth;
+            if (x < 0.33) {
+                this.prev();
+            } else {
+                this.next();
+            }
+        });
+    }
+
+    _bindTouch() {
+        let startX = 0;
+        let startY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+
+            // Only trigger on horizontal swipes (more horizontal than vertical, min 50px)
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                if (dx < 0) {
+                    this.next();
+                } else {
+                    this.prev();
+                }
+            }
+        }, { passive: true });
+    }
+
+    _bindHashChange() {
+        window.addEventListener('hashchange', () => {
+            const hash = parseInt(location.hash.replace('#', ''), 10);
+            if (hash >= 1 && hash <= this.totalSlides && hash - 1 !== this.currentIndex) {
+                this.goTo(hash - 1);
+            }
+        });
+    }
+
+    _toggleFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    }
+
+    // --- Copy slide as markdown ---
+
+    _decodeMarkdown(b64) {
+        // base64 (UTF-8) → string, so unicode math/symbols round-trip cleanly.
+        const binary = atob(b64);
+        const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    }
+
+    _copyCurrentSlideMarkdown() {
+        const slide = this.slides[this.currentIndex];
+        const encoded = slide && slide.getAttribute('data-colloquium-md');
+        if (!encoded) {
+            this._showToast('No markdown source for this slide');
+            return;
+        }
+        let markdown;
+        try {
+            markdown = this._decodeMarkdown(encoded);
+        } catch (_) {
+            this._showToast('Could not read slide markdown');
+            return;
+        }
+        const done = () => this._showToast('Copied slide markdown');
+        const fail = () => this._showToast('Copy failed — clipboard blocked');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(markdown).then(done, () => {
+                if (!this._copyViaTextarea(markdown)) fail();
+                else done();
+            });
+        } else if (this._copyViaTextarea(markdown)) {
+            done();
+        } else {
+            fail();
+        }
+    }
+
+    _copyViaTextarea(text) {
+        // Fallback for insecure contexts (file://, plain http) where the async
+        // Clipboard API is unavailable.
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try {
+            ok = document.execCommand('copy');
+        } catch (_) {
+            ok = false;
+        }
+        document.body.removeChild(ta);
+        return ok;
+    }
+
+    _showToast(message) {
+        if (!this._toast) {
+            this._toast = document.createElement('div');
+            this._toast.className = 'colloquium-toast';
+            document.body.appendChild(this._toast);
+        }
+        this._toast.textContent = message;
+        this._toast.classList.add('visible');
+        clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => {
+            this._toast.classList.remove('visible');
+        }, 1500);
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.colloquium = new ColloquiumPresentation();
+});
+
+</script>
+
+<script>
+window.colloquiumFitDisplayMathIn = function(root) {
+    var scope = root || document;
+    scope.querySelectorAll(".katex-display").forEach(function(display) {
+        display.style.fontSize = "";
+        var katexNode = display.querySelector(".katex");
+        if (!katexNode) return;
+
+        var availableWidth = display.clientWidth;
+        var contentWidth = katexNode.scrollWidth;
+        if (!availableWidth || !contentWidth || contentWidth <= availableWidth) return;
+
+        var scale = availableWidth / contentWidth;
+        display.style.fontSize = (scale * 100) + "%";
+    });
+};
+
+window.colloquiumFitCaptionedFiguresIn = function(root) {
+    var scope = root || document;
+    var selector = [
+        ".slide-content > figure.colloquium-figure:first-child:last-child",
+        ".colloquium-grid > .col > figure.colloquium-figure:first-child:last-child",
+        ".colloquium-row > figure.colloquium-figure:first-child:last-child"
+    ].join(", ");
+
+    scope.querySelectorAll(selector).forEach(function(figure) {
+        var img = figure.querySelector("img");
+        var caption = figure.querySelector("figcaption");
+        if (!img || !caption) return;
+
+        // Authors can take over layout entirely (e.g. absolutely positioned
+        // full-height figures); leave those untouched.
+        if (window.getComputedStyle(figure).position === "absolute") return;
+
+        var container = figure.parentElement;
+        if (!container) return;
+
+        figure.style.width = "";
+        img.style.width = "";
+        img.style.height = "";
+        img.style.maxWidth = "";
+        img.style.maxHeight = "";
+
+        var naturalWidth = img.naturalWidth || 0;
+        var naturalHeight = img.naturalHeight || 0;
+        if (!naturalWidth || !naturalHeight) {
+            img.addEventListener("load", function() {
+                window.colloquiumFitCaptionedFiguresIn(scope);
+            }, { once: true });
+            return;
+        }
+
+        var availableWidth = container.clientWidth;
+        // The caption sits below the image inside the figure: reserve its
+        // height (plus the figure's own gap) so the scaled image + caption
+        // fit the cell together instead of the caption overflowing onto
+        // whatever sits below (usually the footer).
+        var captionHeight = caption.offsetHeight || 0;
+        var figureStyle = window.getComputedStyle(figure);
+        var figureGap = parseFloat(figureStyle.rowGap || figureStyle.gap) || 0;
+        var availableHeight = container.clientHeight - captionHeight - figureGap;
+        if (!availableWidth || availableHeight <= 0) return;
+
+        var scale = Math.min(
+            availableWidth / naturalWidth,
+            availableHeight / naturalHeight
+        );
+        if (!isFinite(scale) || scale <= 0) return;
+
+        var renderWidth = Math.max(1, Math.floor(naturalWidth * scale));
+        var renderHeight = Math.max(1, Math.floor(naturalHeight * scale));
+
+        figure.style.width = renderWidth + "px";
+        img.style.width = renderWidth + "px";
+        img.style.height = renderHeight + "px";
+        img.style.maxWidth = "none";
+        img.style.maxHeight = "none";
+    });
+};
+
+// Render KaTeX math elements and highlight code after deferred scripts load
+window.addEventListener("load", function() {
+    if (typeof katex !== "undefined") {
+        var mathEls = document.querySelectorAll(".math");
+        if (mathEls.length > 0) {
+            // Temporarily show all slides so KaTeX can measure container
+            // dimensions for delimiter sizing (e.g. tall parentheses)
+            var mathSlides = document.querySelectorAll(".slide");
+            var mathOrigDisplay = [];
+            var mathOrigVisibility = [];
+            mathSlides.forEach(function(s) {
+                mathOrigDisplay.push(s.style.display);
+                mathOrigVisibility.push(s.style.visibility);
+                s.style.display = s.classList.contains("img-tall-right") ? "grid" : "flex";
+                if (!s.classList.contains("active")) {
+                    s.style.visibility = "hidden";
+                }
+            });
+
+            mathEls.forEach(function(el) {
+                var displayMode = el.tagName === "DIV";
+                katex.render(el.textContent, el, {
+                    displayMode: displayMode,
+                    throwOnError: false
+                });
+            });
+            window.colloquiumFitDisplayMathIn(document);
+
+            // Restore original slide display and visibility
+            mathSlides.forEach(function(s, i) {
+                s.style.display = mathOrigDisplay[i];
+                s.style.visibility = mathOrigVisibility[i];
+            });
+        }
+
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function() {
+                window.colloquiumFitDisplayMathIn(document);
+                window.colloquiumFitCaptionedFiguresIn(document);
+            });
+        }
+    }
+    if (typeof hljs !== "undefined") {
+        hljs.highlightAll();
+    }
+    window.colloquiumFitCaptionedFiguresIn(document);
+    // Initialize Chart.js charts — temporarily show all slides so canvases
+    // have dimensions, render charts, capture static print images, then restore.
+    if (typeof Chart !== "undefined") {
+        var chartCanvases = document.querySelectorAll("[data-chart-config]");
+        if (chartCanvases.length > 0) {
+            // Make all slides visible so Chart.js can measure canvas size
+            // Use visibility:hidden to avoid a visual flash
+            var slides = document.querySelectorAll(".slide");
+            var origDisplay = [];
+            slides.forEach(function(s) {
+                origDisplay.push(s.style.display);
+                s.style.display = s.classList.contains("img-tall-right") ? "grid" : "flex";
+                if (!s.classList.contains("active")) {
+                    s.style.visibility = "hidden";
+                }
+            });
+
+            chartCanvases.forEach(function(canvas) {
+                try {
+                    var config = JSON.parse(canvas.getAttribute("data-chart-config"));
+                    // Convert tick prefix/suffix strings into real callbacks
+                    var scales = config.options && config.options.scales;
+                    if (scales) {
+                        Object.keys(scales).forEach(function(axis) {
+                            var ticks = scales[axis].ticks;
+                            if (!ticks) return;
+                            var pre = ticks.prefix || "";
+                            var suf = ticks.suffix || "";
+                            if (pre || suf) {
+                                delete ticks.prefix;
+                                delete ticks.suffix;
+                                ticks.callback = function(v) { return pre + v + suf; };
+                            }
+                        });
+                    }
+                    new Chart(canvas, config);
+                } catch(e) {
+                    var slideEl = canvas.closest(".slide");
+                    var slideNum = slideEl ? (slideEl.getAttribute("data-index") || "?") : "?";
+                    var chartId = canvas.id || "unknown";
+                    console.error(
+                        "Colloquium: failed to render chart '" + chartId +
+                        "' on slide " + (parseInt(slideNum, 10) + 1) + ": " + e.message
+                    );
+                }
+            });
+
+            // After a frame, capture each chart as a static image for print,
+            // then always restore slide visibility (even if chart rendering failed).
+            requestAnimationFrame(function() {
+                chartCanvases.forEach(function(canvas) {
+                    try {
+                        var img = document.createElement("img");
+                        img.src = canvas.toDataURL("image/png");
+                        img.className = "colloquium-chart-print";
+                        canvas.parentNode.insertBefore(img, canvas.nextSibling);
+                    } catch(e) {}
+                });
+                // Restore original slide visibility
+                slides.forEach(function(s, i) {
+                    s.style.display = origDisplay[i];
+                    s.style.visibility = "";
+                });
+            });
+        }
+    }
+});
+</script>
+</body>
+</html>
