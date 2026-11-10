@@ -2325,8 +2325,8 @@ body.colloquium-zoomed {
 <div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">2 / 45</span></div></div>
 </section>
 
-<section class="slide slide--content" data-index="2" data-colloquium-md="IyMgKkJ1Z3MqIHF1ZSBzZWd1cm8gaGFiw6lpcyB2aXN0bwoKLSBMYSBjYWJlY2VyYSBkaWNlICoqIjMgcGVuZGllbnRlcyIqKiB5IGxhIGxpc3RhIG11ZXN0cmEgMgotIE1hcmNhcyB1biBpdGVtIGNvbW8gY29tcHJhZG8sIHJlY2FyZ2Fz4oCmIHkgdnVlbHZlIGEgZXN0YXIgc2luIGNvbXByYXIKLSBEb3MgcGVzdGHDsWFzIGFiaWVydGFzLCBkb3MgdmVyc2lvbmVzIGRpc3RpbnRhcyBkZWwgbWlzbW8gbGlzdGFkbwoKPGRpdiBjbGFzcz0iY29sbG9xdWl1bS1zcGFjZXItbWQiPjwvZGl2PgoKYGBgYm94CnRpdGxlOiBTaWVtcHJlIGVzIGVsIG1pc21vIHByb2JsZW1hCnRvbmU6IGFjY2VudApjb250ZW50OiBEb3MgY29waWFzIGRlbCBtaXNtbyBkYXRvIHF1ZSBzZSBoYW4gZGVzaW5jcm9uaXphZG8KYGBg">
-<h2><em>Bugs</em> que seguro habéis visto</h2>
+<section class="slide slide--content" data-index="2" data-colloquium-md="IyMgKkJ1Z3MqIHF1ZSBzZWd1cm8gaGFiw6lpcyB2aXN0by90ZW5pZG8KCi0gTGEgY2FiZWNlcmEgZGljZSAqKiIzIHBlbmRpZW50ZXMiKiogeSBsYSBsaXN0YSBtdWVzdHJhIDIKLSBNYXJjYXMgdW4gaXRlbSBjb21vIGNvbXByYWRvLCByZWNhcmdhc+KApiB5IHZ1ZWx2ZSBhIGVzdGFyIHNpbiBjb21wcmFyCi0gRG9zIHBlc3Rhw7FhcyBhYmllcnRhcywgZG9zIHZlcnNpb25lcyBkaXN0aW50YXMgZGVsIG1pc21vIGxpc3RhZG8KCjxkaXYgY2xhc3M9ImNvbGxvcXVpdW0tc3BhY2VyLW1kIj48L2Rpdj4KCmBgYGJveAp0aXRsZTogU2llbXByZSBlcyBlbCBtaXNtbyBwcm9ibGVtYQp0b25lOiBhY2NlbnQKY29udGVudDogRG9zIGNvcGlhcyBkZWwgbWlzbW8gZGF0byBxdWUgc2UgaGFuIGRlc2luY3Jvbml6YWRvCmBgYAoKRGUgaGVjaG8sIFt1biAqYnVnKiBkZSBlc3RlIHRpcG8gZW4gRmFjZWJvb2tdKGh0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3Nob3J0cy9RSWlsNVk5RzRFaykgZGlvIG9yaWdlbiBhIGxhICJhcnF1aXRlY3R1cmEgRmx1eCIsIHVuYSBpZGVhIHF1ZSBlc3TDoSBlbiBlbCBvcmlnZW4gZGUgbGEgImdlc3Rpw7NuIGNlbnRyYWxpemFkYSBkZWwgZXN0YWRvIiAoYXBhcnRhZG8gMyk=">
+<h2><em>Bugs</em> que seguro habéis visto/tenido</h2>
 <div class="slide-content"><ul>
 <li>La cabecera dice <strong>“3 pendientes”</strong> y la lista muestra 2</li>
 <li>Marcas un item como comprado, recargas… y vuelve a estar sin comprar</li>
@@ -2337,6 +2337,7 @@ body.colloquium-zoomed {
 <div class="colloquium-box-title">Siempre es el mismo problema</div>
 <div class="colloquium-box-content"><p>Dos copias del mismo dato que se han desincronizado</p></div>
 </div>
+<p>De hecho, <a href="https://www.youtube.com/shorts/QIil5Y9G4Ek">un <em>bug</em> de este tipo en Facebook</a> dio origen a la “arquitectura Flux”, una idea que está en el origen de la “gestión centralizada del estado” (apartado 3)</p>
 </div>
 <div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">3 / 45</span></div></div>
 </section>
@@ -2967,15 +2968,13 @@ mutate(post.id)
 <div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">39 / 45</span></div></div>
 </section>
 
-<section class="slide slide--content cols-45-55" style="--colloquium-code-size: 0.6em; --colloquium-columns: minmax(0, 45fr) minmax(0, 55fr);" data-index="39" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy00NS01NSAtLT4KCjwhLS0gc3R5bGU6IC0tY29sbG9xdWl1bS1jb2RlLXNpemU6IDAuNmVtIC0tPgoKIyMgQWN0dWFsaXphY2lvbmVzIG9wdGltaXN0YXMKCjEuIEFudGVzIGRlIGxhIHJlc3B1ZXN0YSwgc2UgKipjYW5jZWxhbioqIGxvcyAqcmVmZXRjaCogZW4gY3Vyc28geSBzZSBhY3R1YWxpemEgbGEgKipjYWNow6kgbG9jYWwqKjogbGEgaW50ZXJmYXogcGFyZWNlIGluc3RhbnTDoW5lYQoyLiBTaSBlbCBzZXJ2aWRvciBkYSBlcnJvciAoYG9uRXJyb3JgKSwgc2UgKipkZXNoYWNlKiogZWwgY2FtYmlvCjMuIEFsIHRlcm1pbmFyIChgb25TZXR0bGVkYCksIHNlICoqaW52YWxpZGEqKiBwYXJhIHF1ZWRhcnNlIGNvbiBsbyBxdWUgZGlnYSBlbCBzZXJ2aWRvciAocG9yIHNpIG90cm9zIGhhbiBjYW1iaWFkbyBhbGdvKQoKU29sbyBjb21wZW5zYSBjdWFuZG8gbGEgZXNwZXJhIHNlIG5vdGEgbXVjaG86IG9ibGlnYSBhIHJlcGV0aXIgZW4gZWwgY2xpZW50ZSBsYSBsw7NnaWNhIGRlbCBzZXJ2aWRvcgoKW2B1c2VMaWtlT3B0aW1pc3RhYCBlbiBlbCBlamVtcGxvXShodHRwczovL2dpdGh1Yi5jb20vb3R0b2NvbC9kZW1vLXRhbnN0YWNrL2Jsb2IvbWFpbi9zcmMvcXVlcmllcy9wb3N0cy5qcykKCnx8fAoKCgpgYGBqYXZhc2NyaXB0CnVzZU11dGF0aW9uKHsKICBtdXRhdGlvbkZuOiBsaWtlUG9zdCwKICBvbk11dGF0ZTogYXN5bmMgKGlkKSA9PiB7CiAgICBhd2FpdCBxYy5jYW5jZWxRdWVyaWVzKHsgcXVlcnlLZXk6IFsncG9zdHMnXSB9KQogICAgY29uc3QgYW50ZXJpb3IgPSBxYy5nZXRRdWVyeURhdGEoWydwb3N0cyddKQogICAgcWMuc2V0UXVlcnlEYXRhKFsncG9zdHMnXSwgKHBvc3RzKSA9PgogICAgICBwb3N0cy5tYXAocCA9PiBwLmlkID09PSBpZCA/IHsgLi4ucCwgbGlrZXM6IHAubGlrZXMgKyAxIH0gOiBwKSkKICAgIHJldHVybiB7IGFudGVyaW9yIH0KICB9LAogIG9uRXJyb3I6IChfZXJyb3IsIF9pZCwgY29udGV4dG8pID0+CiAgICBxYy5zZXRRdWVyeURhdGEoWydwb3N0cyddLCBjb250ZXh0by5hbnRlcmlvciksCiAgb25TZXR0bGVkOiAoKSA9PgogICAgcWMuaW52YWxpZGF0ZVF1ZXJpZXMoeyBxdWVyeUtleTogWydwb3N0cyddIH0pLAp9KQpgYGA=">
+<section class="slide slide--content cols-45-55" style="--colloquium-code-size: 0.5em; --colloquium-columns: minmax(0, 45fr) minmax(0, 55fr);" data-index="39" data-chapter="3" data-colloquium-md="PCEtLSBjbGFzczogY29scy00NS01NSAtLT4KCjwhLS0gc3R5bGU6IC0tY29sbG9xdWl1bS1jb2RlLXNpemU6IDAuNWVtIC0tPgoKIyMgQWN0dWFsaXphY2lvbmVzIG9wdGltaXN0YXMKCjEuIEFudGVzIGRlIGxhIHJlc3B1ZXN0YSwgc2UgKipjYW5jZWxhbioqIGxvcyAqcmVmZXRjaCogZW4gY3Vyc28geSBzZSBhY3R1YWxpemEgbGEgKipjYWNow6kgbG9jYWwqKjogbGEgaW50ZXJmYXogcGFyZWNlIGluc3RhbnTDoW5lYQoyLiBTaSBlbCBzZXJ2aWRvciBkYSBlcnJvciAoYG9uRXJyb3JgKSwgc2UgKipkZXNoYWNlKiogZWwgY2FtYmlvCjMuIEFsIHRlcm1pbmFyIChgb25TZXR0bGVkYCksIHNlICoqaW52YWxpZGEqKiBwYXJhIHF1ZWRhcnNlIGNvbiBsbyBxdWUgZGlnYSBlbCBzZXJ2aWRvciAocG9yIHNpIG90cm9zIGhhbiBjYW1iaWFkbyBhbGdvKQoKCnx8fAoKCgpgYGBqYXZhc2NyaXB0CnVzZU11dGF0aW9uKHsKICBtdXRhdGlvbkZuOiBsaWtlUG9zdCwKICBvbk11dGF0ZTogYXN5bmMgKGlkKSA9PiB7CiAgICBhd2FpdCBxYy5jYW5jZWxRdWVyaWVzKHsgcXVlcnlLZXk6IFsncG9zdHMnXSB9KQogICAgY29uc3QgYW50ZXJpb3IgPSBxYy5nZXRRdWVyeURhdGEoWydwb3N0cyddKQogICAgcWMuc2V0UXVlcnlEYXRhKFsncG9zdHMnXSwgKHBvc3RzKSA9PgogICAgICBwb3N0cy5tYXAocCA9PiBwLmlkID09PSBpZCA/IHsgLi4ucCwgbGlrZXM6IHAubGlrZXMgKyAxIH0gOiBwKSkKICAgIHJldHVybiB7IGFudGVyaW9yIH0KICB9LAogIG9uRXJyb3I6IChfZXJyb3IsIF9pZCwgY29udGV4dG8pID0+CiAgICBxYy5zZXRRdWVyeURhdGEoWydwb3N0cyddLCBjb250ZXh0by5hbnRlcmlvciksCiAgb25TZXR0bGVkOiAoKSA9PgogICAgcWMuaW52YWxpZGF0ZVF1ZXJpZXMoeyBxdWVyeUtleTogWydwb3N0cyddIH0pLAp9KQpgYGAKClNvbG8gY29tcGVuc2Egc2kgbGEgZXNwZXJhIHNlIG5vdGEgbXVjaG86IG9ibGlnYSBhIHJlcGV0aXIgZW4gZWwgY2xpZW50ZSBsYSBsw7NnaWNhIGRlbCBzZXJ2aWRvci4gW2B1c2VMaWtlT3B0aW1pc3RhYCBlbiBlbCBlamVtcGxvXShodHRwczovL2dpdGh1Yi5jb20vb3R0b2NvbC9kZW1vLXRhbnN0YWNrL2Jsb2IvbWFpbi9zcmMvcXVlcmllcy9wb3N0cy5qcyk=">
 <h2>Actualizaciones optimistas</h2>
 <div class="slide-content colloquium-grid" style="grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);"><div class="col"><ol>
 <li>Antes de la respuesta, se <strong>cancelan</strong> los <em>refetch</em> en curso y se actualiza la <strong>caché local</strong>: la interfaz parece instantánea</li>
 <li>Si el servidor da error (<code>onError</code>), se <strong>deshace</strong> el cambio</li>
 <li>Al terminar (<code>onSettled</code>), se <strong>invalida</strong> para quedarse con lo que diga el servidor (por si otros han cambiado algo)</li>
-</ol>
-<p>Solo compensa cuando la espera se nota mucho: obliga a repetir en el cliente la lógica del servidor</p>
-<p><a href="https://github.com/ottocol/demo-tanstack/blob/main/src/queries/posts.js"><code>useLikeOptimista</code> en el ejemplo</a></p></div><div class="col"><pre><code class="language-javascript">useMutation({
+</ol></div><div class="col"><pre><code class="language-javascript">useMutation({
   mutationFn: likePost,
   onMutate: async (id) =&gt; {
     await qc.cancelQueries({ queryKey: ['posts'] })
@@ -2989,7 +2988,8 @@ mutate(post.id)
   onSettled: () =&gt;
     qc.invalidateQueries({ queryKey: ['posts'] }),
 })
-</code></pre></div></div>
+</code></pre>
+<p>Solo compensa si la espera se nota mucho: obliga a repetir en el cliente la lógica del servidor. <a href="https://github.com/ottocol/demo-tanstack/blob/main/src/queries/posts.js"><code>useLikeOptimista</code> en el ejemplo</a></p></div></div>
 <div class="colloquium-footer"><div class="colloquium-footer-left">Gestión de estado</div><div class="colloquium-footer-center"></div><div class="colloquium-footer-right colloquium-footer-nav"><span class="colloquium-counter">40 / 45</span></div></div>
 </section>
 
